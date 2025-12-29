@@ -1,15 +1,10 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "functions": {
-    "backend/bot/api/telegram.py": {
-      "runtime": "python3.9"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/telegram",
-      "dest": "/backend/bot/api/telegram.py"
+      "destination": "/backend/bot/api/telegram.py"
     },
     {
       "source": "/(.*)",
