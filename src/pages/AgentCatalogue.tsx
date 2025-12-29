@@ -32,7 +32,7 @@ const AgentCatalogue = () => {
   const [filters, setFilters] = useState({
     minPrice: '',
     maxPrice: '',
-    bedrooms: '',
+    bedrooms: 'any',
     type: 'all',
     sortBy: 'newest',
   });
@@ -59,7 +59,7 @@ const AgentCatalogue = () => {
     }
 
     // Bedrooms filter
-    if (filters.bedrooms) {
+    if (filters.bedrooms && filters.bedrooms !== 'any') {
       filtered = filtered.filter((house) => house.bedrooms === Number(filters.bedrooms));
     }
 
@@ -100,14 +100,14 @@ const AgentCatalogue = () => {
   const hasActiveFilters = 
     filters.minPrice || 
     filters.maxPrice || 
-    filters.bedrooms || 
+    (filters.bedrooms && filters.bedrooms !== 'any') || 
     (filters.type && filters.type !== 'all');
 
   const clearFilters = () => {
     setFilters({
       minPrice: '',
       maxPrice: '',
-      bedrooms: '',
+      bedrooms: 'any',
       type: 'all',
       sortBy: 'newest',
     });
@@ -143,7 +143,7 @@ const AgentCatalogue = () => {
             <SelectValue placeholder="Any" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Any</SelectItem>
+            <SelectItem value="any">Any</SelectItem>
             <SelectItem value="1">1</SelectItem>
             <SelectItem value="2">2</SelectItem>
             <SelectItem value="3">3</SelectItem>
