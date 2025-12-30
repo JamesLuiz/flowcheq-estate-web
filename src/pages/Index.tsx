@@ -6,6 +6,7 @@ import { Footer } from '@/components/Footer';
 import { HouseCard } from '@/components/HouseCard';
 import { FeaturedAgents } from '@/components/FeaturedAgents';
 import { SearchFilters } from '@/components/SearchFilters';
+import { FeaturedBanner } from '@/components/FeaturedBanner';
 import { FilterParams } from '@/types';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, BellRing, Loader2, RotateCcw } from 'lucide-react';
@@ -185,6 +186,12 @@ const Index = () => {
               </Link>
             )}
           </div>
+        </div>
+      </section>
+
+      <section className="py-8 md:py-12 bg-background">
+        <div className="container mx-auto px-4">
+          <FeaturedBanner />
         </div>
       </section>
 

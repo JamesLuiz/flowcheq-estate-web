@@ -5,6 +5,7 @@ import { Plus, Home as HomeIcon, TrendingUp, Eye, Loader2, Edit, Trash2, User } 
 import { Navbar } from '@/components/Navbar';
 import { HouseCard } from '@/components/HouseCard';
 import { VerificationPanel } from '@/components/VerificationPanel';
+import { RichTextEditor } from '@/components/RichTextEditor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -473,16 +474,16 @@ const Dashboard = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Describe your property..."
-                    rows={4}
+                  <RichTextEditor
                     value={formState.description}
-                    onChange={(event) =>
-                      setFormState((prev) => ({ ...prev, description: event.target.value }))
+                    onChange={(value) =>
+                      setFormState((prev) => ({ ...prev, description: value }))
                     }
-                    required
+                    placeholder="Describe your property with rich formatting (bold, italic, lists, etc.)..."
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Use the toolbar to format your description with bold, italic, bullet points, and more.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -745,16 +746,16 @@ const Dashboard = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="edit-description">Description</Label>
-                  <Textarea
-                    id="edit-description"
-                    placeholder="Describe your property..."
-                    rows={4}
+                  <RichTextEditor
                     value={formState.description}
-                    onChange={(event) =>
-                      setFormState((prev) => ({ ...prev, description: event.target.value }))
+                    onChange={(value) =>
+                      setFormState((prev) => ({ ...prev, description: value }))
                     }
-                    required
+                    placeholder="Describe your property with rich formatting (bold, italic, lists, etc.)..."
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Use the toolbar to format your description with bold, italic, bullet points, and more.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

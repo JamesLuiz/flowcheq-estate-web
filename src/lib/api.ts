@@ -305,10 +305,56 @@ const alertsApi = {
   delete: (id: string) => request(`/alerts/${id}`, 'DELETE'),
 };
 
+const verificationsApi = {
+  upload: (documentType: 'nin' | 'driver_license', document: File, selfie: File) => {
+    const formData = new FormData();
+    formData.append('document', document);
+    formData.append('selfie', selfie);
+    formData.append('documentType', documentType);
+    
+    const token = getAuthToken();
+    const baseUrl = getApiBaseUrl();
+    return fetch(`${baseUrl}/verifications/upload`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Upload failed');
+      }
+      return res.json();
+    });
+  },
+  getMyVerification: () => request<{
+    id: string;
+    documentType: string;
+    documentUrl: string;
+    status: string;
+    rejectionReason?: string;
+    adminMessage?: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null>('/verifications/me', 'GET'),
+};
+
 const adminApi = {
   getPendingVerifications: () => request<{ data: Agent[] }>('/admin/verifications/pending', 'GET'),
   updateVerificationStatus: (agentId: string, status: 'approved' | 'rejected') =>
     request<Agent>(`/admin/verifications/${agentId}`, 'PATCH', { body: { status } }),
+  getAllVerifications: (status?: string) => {
+    const params = status ? { status } : {};
+    return request<any[]>('/verifications/admin/all', 'GET', { params });
+  },
+  getVerificationById: (id: string) => request<any>(`/verifications/admin/${id}`, 'GET'),
+  reviewVerification: (id: string, payload: {
+    status: 'approved' | 'rejected';
+    rejectionReason?: string;
+    adminMessage?: string;
+  }) => request<any>(`/verifications/admin/${id}/review`, 'POST', { body: payload }),
+  deleteVerification: (id: string) => request<{ success: boolean }>(`/verifications/admin/${id}`, 'DELETE'),
 };
 
 export const api = {
@@ -317,6 +363,7 @@ export const api = {
   agents: agentsApi,
   reviews: reviewsApi,
   alerts: alertsApi,
+  verifications: verificationsApi,
   admin: adminApi,
 };
 

@@ -278,7 +278,10 @@ const HouseDetails = () => {
 
                 <div>
                   <h2 className="text-xl font-semibold mb-3">Description</h2>
-                  <p className="text-muted-foreground leading-relaxed">{house.description}</p>
+                  <div 
+                    className="text-muted-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert"
+                    dangerouslySetInnerHTML={{ __html: house.description }}
+                  />
                 </div>
               </CardContent>
             </Card>
