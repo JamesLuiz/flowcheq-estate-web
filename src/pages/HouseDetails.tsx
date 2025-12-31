@@ -18,6 +18,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { HouseMapView } from '@/components/HouseMapView';
+import { VirtualTour } from '@/components/VirtualTour';
+import { ViewingScheduler } from '@/components/ViewingScheduler';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
@@ -283,6 +285,14 @@ const HouseDetails = () => {
                     dangerouslySetInnerHTML={{ __html: house.description }}
                   />
                 </div>
+
+                {/* Virtual Tour */}
+                {images.length > 1 && (
+                  <div className="mt-6">
+                    <h2 className="text-xl font-semibold mb-4">Virtual Tour</h2>
+                    <VirtualTour images={images} propertyTitle={house.title} />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -381,6 +391,15 @@ const HouseDetails = () => {
                             View Profile
                           </Button>
                         </Link>
+                      )}
+
+                      {/* Viewing Scheduler */}
+                      {agent?.id && (
+                        <ViewingScheduler 
+                          houseId={house.id} 
+                          agentId={agent.id} 
+                          propertyTitle={house.title} 
+                        />
                       )}
                     </div>
 

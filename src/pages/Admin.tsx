@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, CheckCircle, XCircle, User, Loader2, ArrowLeft, Eye, FileText, Image as ImageIcon, UserCircle } from 'lucide-react';
+import { 
+  ShieldCheck, CheckCircle, XCircle, Loader2, ArrowLeft, Eye, FileText, 
+  Image as ImageIcon, Megaphone, Users, TrendingUp, Ban, RefreshCw 
+} from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -51,21 +53,62 @@ interface Verification {
   updatedAt: string;
 }
 
+interface Promotion {
+  id: string;
+  houseId: {
+    id: string;
+    title: string;
+    price: number;
+    location: string;
+    images: string[];
+  };
+  userId: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  bannerImage: string;
+  startDate: string;
+  endDate: string;
+  days: number;
+  amount: number;
+  status: 'pending' | 'active' | 'expired' | 'cancelled';
+  clicks: number;
+  createdAt: string;
+}
+
 const Admin = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Main tab state
+  const [activeTab, setActiveTab] = useState<'verifications' | 'promotions'>('verifications');
+  
+  // Verification states
   const [selectedVerification, setSelectedVerification] = useState<Verification | null>(null);
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [adminMessage, setAdminMessage] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('pending');
+  const [verificationStatusFilter, setVerificationStatusFilter] = useState<string>('pending');
+  
+  // Promotion states
+  const [promotionStatusFilter, setPromotionStatusFilter] = useState<string>('');
+  const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
 
+  // Verification queries
   const verificationsQuery = useQuery({
-    queryKey: ['admin-verifications', statusFilter],
-    queryFn: () => api.admin.getAllVerifications(statusFilter),
-    enabled: isAuthenticated && user?.role === 'admin',
+    queryKey: ['admin-verifications', verificationStatusFilter],
+    queryFn: () => api.admin.getAllVerifications(verificationStatusFilter),
+    enabled: isAuthenticated && user?.role === 'admin' && activeTab === 'verifications',
+  });
+
+  // Promotions query
+  const promotionsQuery = useQuery({
+    queryKey: ['admin-promotions', promotionStatusFilter],
+    queryFn: () => api.admin.getAllPromotions(promotionStatusFilter),
+    enabled: isAuthenticated && user?.role === 'admin' && activeTab === 'promotions',
   });
 
   const reviewMutation = useMutation({
@@ -74,10 +117,9 @@ const Admin = () => {
     onSuccess: () => {
       toast({
         title: 'Verification Updated',
-        description: 'Verification status updated successfully.',
+        description: 'Verification status updated and email notification sent.',
       });
       queryClient.invalidateQueries({ queryKey: ['admin-verifications'] });
-      queryClient.invalidateQueries({ queryKey: ['verification'] });
       setSelectedVerification(null);
       setActionType(null);
       setRejectionReason('');
@@ -92,7 +134,7 @@ const Admin = () => {
     },
   });
 
-  const deleteMutation = useMutation({
+  const deleteVerificationMutation = useMutation({
     mutationFn: (id: string) => api.admin.deleteVerification(id),
     onSuccess: () => {
       toast({
@@ -110,7 +152,46 @@ const Admin = () => {
     },
   });
 
+  const cancelPromotionMutation = useMutation({
+    mutationFn: (id: string) => api.admin.cancelPromotion(id),
+    onSuccess: () => {
+      toast({
+        title: 'Promotion Cancelled',
+        description: 'The promotion has been cancelled.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['admin-promotions'] });
+      setSelectedPromotion(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Cancel Failed',
+        description: error.message,
+      });
+    },
+  });
+
+  const activatePromotionMutation = useMutation({
+    mutationFn: (id: string) => api.admin.activatePromotion(id),
+    onSuccess: () => {
+      toast({
+        title: 'Promotion Activated',
+        description: 'The promotion is now active.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['admin-promotions'] });
+      setSelectedPromotion(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Activation Failed',
+        description: error.message,
+      });
+    },
+  });
+
   const verifications = (verificationsQuery.data as Verification[]) || [];
+  const promotions = (promotionsQuery.data as Promotion[]) || [];
 
   // Check if user is admin
   if (!isAuthenticated || user?.role !== 'admin') {
@@ -119,7 +200,7 @@ const Admin = () => {
         <Navbar />
         <div className="container mx-auto px-4 py-16 text-center space-y-4">
           <ShieldCheck className="h-16 w-16 mx-auto text-muted-foreground" />
-          <h1 className="text-3xl font-bold">Admin Access Required</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Admin Access Required</h1>
           <p className="text-muted-foreground">
             You need admin privileges to access this page.
           </p>
@@ -129,19 +210,24 @@ const Admin = () => {
     );
   }
 
-  const handleAction = (verification: Verification, action: 'approve' | 'reject') => {
+  const handleVerificationAction = (verification: Verification, action: 'approve' | 'reject') => {
     setSelectedVerification(verification);
     setActionType(action);
     setRejectionReason(verification.rejectionReason || '');
     setAdminMessage(verification.adminMessage || '');
   };
 
-  const confirmAction = () => {
+  const confirmVerificationAction = () => {
     if (!selectedVerification || !actionType) return;
+    
+    const statusMap: Record<'approve' | 'reject', 'approved' | 'rejected'> = {
+      approve: 'approved',
+      reject: 'rejected',
+    };
     
     reviewMutation.mutate({
       id: selectedVerification.id,
-      status: actionType,
+      status: statusMap[actionType],
       reason: actionType === 'reject' ? rejectionReason : undefined,
       message: adminMessage || undefined,
     });
@@ -151,7 +237,10 @@ const Admin = () => {
     const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
       pending: 'secondary',
       approved: 'default',
+      active: 'default',
       rejected: 'destructive',
+      cancelled: 'destructive',
+      expired: 'outline',
     };
     return (
       <Badge variant={variants[status] || 'outline'} className="capitalize">
@@ -160,37 +249,107 @@ const Admin = () => {
     );
   };
 
+  // Stats calculations
+  const totalPromotionRevenue = promotions.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const activePromotions = promotions.filter(p => p.status === 'active').length;
+  const pendingVerifications = verifications.filter(v => v.status === 'pending').length;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8">
-        <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
+      <div className="container mx-auto px-4 py-6 md:py-8">
+        <Button variant="ghost" className="mb-4 md:mb-6" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">
-            Manage verification requests and review documents
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold mb-2">Admin Dashboard</h1>
+          <p className="text-muted-foreground text-sm md:text-base">
+            Manage verifications, promotions, and platform settings
           </p>
         </div>
 
-        <Tabs value={statusFilter} onValueChange={setStatusFilter} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="approved">Approved</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected</TabsTrigger>
-            <TabsTrigger value="">All</TabsTrigger>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 md:mb-8">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Pending</span> Verifications
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pendingVerifications}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Megaphone className="h-4 w-4" />
+                Active Promotions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activePromotions}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                <span className="hidden sm:inline">Total</span> Revenue
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">₦{totalPromotionRevenue.toLocaleString()}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                Total Agents
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{verifications.length}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Tabs */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsTrigger value="verifications" className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">Verifications</span>
+              <span className="sm:hidden">Verify</span>
+            </TabsTrigger>
+            <TabsTrigger value="promotions" className="flex items-center gap-2">
+              <Megaphone className="h-4 w-4" />
+              <span className="hidden sm:inline">Promotions</span>
+              <span className="sm:hidden">Promo</span>
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value={statusFilter}>
+          {/* Verifications Tab */}
+          <TabsContent value="verifications" className="space-y-4">
+            <Tabs value={verificationStatusFilter} onValueChange={setVerificationStatusFilter}>
+              <TabsList className="flex-wrap">
+                <TabsTrigger value="pending">Pending</TabsTrigger>
+                <TabsTrigger value="approved">Approved</TabsTrigger>
+                <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                <TabsTrigger value="">All</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
             <Card>
               <CardHeader>
                 <CardTitle>Verification Requests</CardTitle>
                 <CardDescription>
-                  Review and approve or reject verification documents
+                  Review and approve or reject verification documents. Email notifications are sent automatically.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -209,9 +368,9 @@ const Admin = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead>User</TableHead>
-                          <TableHead>Document Type</TableHead>
+                          <TableHead className="hidden md:table-cell">Document</TableHead>
                           <TableHead>Status</TableHead>
-                          <TableHead>Submitted</TableHead>
+                          <TableHead className="hidden sm:table-cell">Date</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -219,27 +378,25 @@ const Admin = () => {
                         {verifications.map((verification) => (
                           <TableRow key={verification.id}>
                             <TableCell>
-                              <div className="flex items-center gap-3">
-                                <div>
-                                  <p className="font-semibold">{verification.userId.name}</p>
-                                  <p className="text-sm text-muted-foreground">{verification.userId.email}</p>
-                                  <p className="text-xs text-muted-foreground capitalize">{verification.userId.role}</p>
-                                </div>
+                              <div>
+                                <p className="font-semibold text-sm">{verification.userId.name}</p>
+                                <p className="text-xs text-muted-foreground hidden sm:block">{verification.userId.email}</p>
+                                <p className="text-xs text-muted-foreground capitalize">{verification.userId.role}</p>
                               </div>
                             </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="capitalize">
+                            <TableCell className="hidden md:table-cell">
+                              <Badge variant="outline" className="capitalize text-xs">
                                 {verification.documentType === 'nin' ? 'NIN' : "Driver's License"}
                               </Badge>
                             </TableCell>
                             <TableCell>
                               {getStatusBadge(verification.status)}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="hidden sm:table-cell text-sm">
                               {new Date(verification.createdAt).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1 flex-wrap">
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -248,39 +405,154 @@ const Admin = () => {
                                     setActionType(null);
                                   }}
                                 >
-                                  <Eye className="h-4 w-4 mr-1" />
-                                  View
+                                  <Eye className="h-4 w-4" />
+                                  <span className="hidden sm:inline ml-1">View</span>
                                 </Button>
                                 {verification.status === 'pending' && (
                                   <>
                                     <Button
                                       size="sm"
                                       variant="default"
-                                      onClick={() => handleAction(verification, 'approve')}
+                                      onClick={() => handleVerificationAction(verification, 'approve')}
                                       disabled={reviewMutation.isPending}
                                     >
-                                      <CheckCircle className="h-4 w-4 mr-1" />
-                                      Approve
+                                      <CheckCircle className="h-4 w-4" />
                                     </Button>
                                     <Button
                                       size="sm"
                                       variant="destructive"
-                                      onClick={() => handleAction(verification, 'reject')}
+                                      onClick={() => handleVerificationAction(verification, 'reject')}
                                       disabled={reviewMutation.isPending}
                                     >
-                                      <XCircle className="h-4 w-4 mr-1" />
-                                      Reject
+                                      <XCircle className="h-4 w-4" />
                                     </Button>
                                   </>
                                 )}
-                                {verification.status === 'rejected' && (
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Promotions Tab */}
+          <TabsContent value="promotions" className="space-y-4">
+            <Tabs value={promotionStatusFilter} onValueChange={setPromotionStatusFilter}>
+              <TabsList className="flex-wrap">
+                <TabsTrigger value="">All</TabsTrigger>
+                <TabsTrigger value="active">Active</TabsTrigger>
+                <TabsTrigger value="pending">Pending</TabsTrigger>
+                <TabsTrigger value="expired">Expired</TabsTrigger>
+                <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Promotions Management</CardTitle>
+                <CardDescription>
+                  View and manage property promotions and featured listings
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {promotionsQuery.isLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : promotions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Megaphone className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No promotions found</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Property</TableHead>
+                          <TableHead className="hidden md:table-cell">Agent</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="hidden sm:table-cell">Amount</TableHead>
+                          <TableHead className="hidden lg:table-cell">Clicks</TableHead>
+                          <TableHead className="hidden md:table-cell">Duration</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {promotions.map((promotion) => (
+                          <TableRow key={promotion.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <img 
+                                  src={promotion.bannerImage} 
+                                  alt="Banner" 
+                                  className="w-12 h-12 rounded object-cover hidden sm:block"
+                                />
+                                <div>
+                                  <p className="font-semibold text-sm line-clamp-1">
+                                    {promotion.houseId?.title || 'N/A'}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground line-clamp-1">
+                                    {promotion.houseId?.location || 'N/A'}
+                                  </p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              <div>
+                                <p className="text-sm">{promotion.userId?.name || 'N/A'}</p>
+                                <p className="text-xs text-muted-foreground">{promotion.userId?.email}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {getStatusBadge(promotion.status)}
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              <span className="font-semibold">₦{promotion.amount?.toLocaleString()}</span>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              {promotion.clicks}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell text-sm">
+                              <div>
+                                <p>{new Date(promotion.startDate).toLocaleDateString()}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  to {new Date(promotion.endDate).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setSelectedPromotion(promotion)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                {promotion.status === 'pending' && (
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    onClick={() => activatePromotionMutation.mutate(promotion.id)}
+                                    disabled={activatePromotionMutation.isPending}
+                                  >
+                                    <RefreshCw className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {(promotion.status === 'active' || promotion.status === 'pending') && (
                                   <Button
                                     size="sm"
                                     variant="destructive"
-                                    onClick={() => deleteMutation.mutate(verification.id)}
-                                    disabled={deleteMutation.isPending}
+                                    onClick={() => cancelPromotionMutation.mutate(promotion.id)}
+                                    disabled={cancelPromotionMutation.isPending}
                                   >
-                                    Delete
+                                    <Ban className="h-4 w-4" />
                                   </Button>
                                 )}
                               </div>
@@ -297,7 +569,7 @@ const Admin = () => {
         </Tabs>
       </div>
 
-      {/* View Document Dialog */}
+      {/* View Verification Document Dialog */}
       <Dialog open={selectedVerification !== null && actionType === null} onOpenChange={() => setSelectedVerification(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -333,7 +605,7 @@ const Admin = () => {
                 <div>
                   <Label>Document (NIN/Driver's License)</Label>
                   <div className="mt-2 border rounded-lg p-4 bg-muted/50">
-                    {selectedVerification.documentUrl.endsWith('.pdf') ? (
+                    {selectedVerification.documentUrl?.endsWith('.pdf') ? (
                       <iframe
                         src={selectedVerification.documentUrl}
                         className="w-full h-96 rounded"
@@ -347,17 +619,15 @@ const Admin = () => {
                       />
                     )}
                   </div>
-                  <div className="mt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(selectedVerification.documentUrl, '_blank')}
-                      className="w-full"
-                    >
-                      <FileText className="h-4 w-4 mr-1" />
-                      Open Document
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(selectedVerification.documentUrl, '_blank')}
+                    className="w-full mt-2"
+                  >
+                    <FileText className="h-4 w-4 mr-1" />
+                    Open Document
+                  </Button>
                 </div>
 
                 <div>
@@ -369,33 +639,17 @@ const Admin = () => {
                       className="w-full h-auto rounded max-h-96 object-contain mx-auto"
                     />
                   </div>
-                  <div className="mt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(selectedVerification.selfieUrl, '_blank')}
-                      className="w-full"
-                    >
-                      <ImageIcon className="h-4 w-4 mr-1" />
-                      Open Selfie
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(selectedVerification.selfieUrl, '_blank')}
+                    className="w-full mt-2"
+                  >
+                    <ImageIcon className="h-4 w-4 mr-1" />
+                    Open Selfie
+                  </Button>
                 </div>
               </div>
-
-              {selectedVerification.rejectionReason && (
-                <div>
-                  <Label>Rejection Reason</Label>
-                  <p className="text-sm text-muted-foreground">{selectedVerification.rejectionReason}</p>
-                </div>
-              )}
-
-              {selectedVerification.adminMessage && (
-                <div>
-                  <Label>Admin Message</Label>
-                  <p className="text-sm text-muted-foreground">{selectedVerification.adminMessage}</p>
-                </div>
-              )}
 
               {selectedVerification.status === 'pending' && (
                 <div className="flex gap-2 pt-4">
@@ -430,7 +684,7 @@ const Admin = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Approve/Reject Dialog */}
+      {/* Approve/Reject Verification Dialog */}
       <Dialog open={actionType !== null} onOpenChange={() => {
         setActionType(null);
         setRejectionReason('');
@@ -443,57 +697,137 @@ const Admin = () => {
             </DialogTitle>
             <DialogDescription>
               {actionType === 'approve'
-                ? `Approve verification for ${selectedVerification?.userId.name}?`
+                ? `Approve verification for ${selectedVerification?.userId.name}? An email notification will be sent.`
                 : `Reject verification for ${selectedVerification?.userId.name}? Please provide a reason.`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="adminMessage">Message to User</Label>
+            {actionType === 'reject' && (
+              <div className="space-y-2">
+                <Label htmlFor="rejectionReason">Rejection Reason</Label>
+                <Textarea
+                  id="rejectionReason"
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="e.g., Document is unclear, name doesn't match..."
+                  rows={3}
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="adminMessage">Message to User (Email)</Label>
               <Textarea
                 id="adminMessage"
                 value={adminMessage}
                 onChange={(e) => setAdminMessage(e.target.value)}
                 placeholder={actionType === 'approve' 
-                  ? 'Your verification has been approved. You can now upload properties.'
-                  : 'Please provide a message explaining why the verification was rejected.'}
+                  ? 'Congratulations! Your account has been verified...'
+                  : 'Please resubmit with a clearer document...'}
                 rows={3}
               />
             </div>
-            {actionType === 'reject' && (
-              <div>
-                <Label htmlFor="rejectionReason">Rejection Reason *</Label>
-                <Input
-                  id="rejectionReason"
-                  value={rejectionReason}
-                  onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="e.g., Document is unclear, Name doesn't match, Document expired"
-                  required
-                />
-              </div>
-            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setActionType(null);
-              setRejectionReason('');
-              setAdminMessage('');
-            }}>
+            <Button variant="outline" onClick={() => setActionType(null)}>
               Cancel
             </Button>
             <Button
               variant={actionType === 'approve' ? 'default' : 'destructive'}
-              onClick={confirmAction}
+              onClick={confirmVerificationAction}
               disabled={reviewMutation.isPending || (actionType === 'reject' && !rejectionReason)}
             >
               {reviewMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : actionType === 'approve' ? (
+                <CheckCircle className="h-4 w-4 mr-2" />
               ) : (
-                <>Confirm {actionType === 'approve' ? 'Approval' : 'Rejection'}</>
+                <XCircle className="h-4 w-4 mr-2" />
               )}
+              {actionType === 'approve' ? 'Approve & Send Email' : 'Reject & Send Email'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Promotion Dialog */}
+      <Dialog open={selectedPromotion !== null} onOpenChange={() => setSelectedPromotion(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Promotion Details</DialogTitle>
+            <DialogDescription>
+              Viewing promotion for {selectedPromotion?.houseId?.title}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPromotion && (
+            <div className="space-y-4">
+              <div className="aspect-video rounded-lg overflow-hidden border">
+                <img 
+                  src={selectedPromotion.bannerImage} 
+                  alt="Promotion Banner" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Property</Label>
+                  <p className="font-semibold">{selectedPromotion.houseId?.title}</p>
+                  <p className="text-sm text-muted-foreground">{selectedPromotion.houseId?.location}</p>
+                </div>
+                <div>
+                  <Label>Agent</Label>
+                  <p className="font-semibold">{selectedPromotion.userId?.name}</p>
+                  <p className="text-sm text-muted-foreground">{selectedPromotion.userId?.email}</p>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <div className="mt-1">{getStatusBadge(selectedPromotion.status)}</div>
+                </div>
+                <div>
+                  <Label>Amount Paid</Label>
+                  <p className="font-semibold text-lg">₦{selectedPromotion.amount?.toLocaleString()}</p>
+                </div>
+                <div>
+                  <Label>Duration</Label>
+                  <p>{selectedPromotion.days} days</p>
+                </div>
+                <div>
+                  <Label>Total Clicks</Label>
+                  <p className="font-semibold">{selectedPromotion.clicks}</p>
+                </div>
+                <div>
+                  <Label>Start Date</Label>
+                  <p>{new Date(selectedPromotion.startDate).toLocaleString()}</p>
+                </div>
+                <div>
+                  <Label>End Date</Label>
+                  <p>{new Date(selectedPromotion.endDate).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {selectedPromotion?.status === 'pending' && (
+              <Button
+                variant="default"
+                onClick={() => activatePromotionMutation.mutate(selectedPromotion.id)}
+                disabled={activatePromotionMutation.isPending}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Activate Promotion
+              </Button>
+            )}
+            {(selectedPromotion?.status === 'active' || selectedPromotion?.status === 'pending') && (
+              <Button
+                variant="destructive"
+                onClick={() => cancelPromotionMutation.mutate(selectedPromotion!.id)}
+                disabled={cancelPromotionMutation.isPending}
+              >
+                <Ban className="h-4 w-4 mr-2" />
+                Cancel Promotion
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setSelectedPromotion(null)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

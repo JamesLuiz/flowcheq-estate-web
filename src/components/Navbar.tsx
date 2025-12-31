@@ -1,8 +1,9 @@
-import { Home, LogIn, LogOut, Menu, User, X } from 'lucide-react';
+import { Home, LogIn, LogOut, Menu, User, X, Shield } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { ThemeToggle } from './ThemeToggle';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,7 +46,7 @@ export const Navbar = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-4">
             <Link to="/" className="text-foreground hover:text-primary transition-colors">
               Home
             </Link>
@@ -55,6 +56,7 @@ export const Navbar = () => {
             <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
               Contact
             </Link>
+            <ThemeToggle />
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -63,7 +65,7 @@ export const Navbar = () => {
                       <AvatarImage src={user?.avatarUrl} alt={user?.name} />
                       <AvatarFallback>{avatarInitials}</AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium">{user?.name}</span>
+                    <span className="text-sm font-medium max-w-[100px] truncate">{user?.name}</span>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -78,6 +80,14 @@ export const Navbar = () => {
                       <Link to="/profile/edit" className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         <span>Edit Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {user?.role === 'admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin" className="flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        <span>Admin Panel</span>
                       </Link>
                     </DropdownMenuItem>
                   )}
@@ -98,12 +108,15 @@ export const Navbar = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            className="md:hidden text-foreground"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          <div className="md:hidden flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              className="text-foreground"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -139,6 +152,15 @@ export const Navbar = () => {
                 >
                   Dashboard
                 </Link>
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className="block text-foreground hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Admin Panel
+                  </Link>
+                )}
                 <Button variant="outline" size="sm" className="w-full" onClick={handleLogout}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout

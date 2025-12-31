@@ -355,6 +355,72 @@ const adminApi = {
     adminMessage?: string;
   }) => request<any>(`/verifications/admin/${id}/review`, 'POST', { body: payload }),
   deleteVerification: (id: string) => request<{ success: boolean }>(`/verifications/admin/${id}`, 'DELETE'),
+  // Promotions admin endpoints
+  getAllPromotions: (status?: string) => {
+    const params = status ? { status } : {};
+    return request<any[]>('/admin/promotions', 'GET', { params });
+  },
+  activatePromotion: (id: string) => request<any>(`/admin/promotions/${id}/activate`, 'PATCH'),
+  cancelPromotion: (id: string) => request<any>(`/admin/promotions/${id}`, 'DELETE'),
+};
+
+const promotionsApi = {
+  getActive: () => request<any[]>('/promotions/active', 'GET'),
+  getAll: (status?: string) => {
+    const params = status ? { status } : {};
+    return request<any[]>('/promotions', 'GET', { params });
+  },
+  get: (id: string) => request<any>(`/promotions/${id}`, 'GET'),
+  initializePayment: (payload: {
+    houseId: string;
+    days: number;
+    email: string;
+    name: string;
+    phone?: string;
+  }) => request<{ link: string; tx_ref: string }>('/promotions/initialize-payment', 'POST', { body: payload }),
+  verifyPayment: (payload: {
+    transactionId: string;
+    houseId: string;
+    days: number;
+    startDate: string;
+    bannerImage: string;
+  }) => request<{ success: boolean; promotion: any }>('/promotions/verify-payment', 'POST', { body: payload }),
+  create: (formData: FormData) => {
+    const token = getAuthToken();
+    const baseUrl = getApiBaseUrl();
+    return fetch(`${baseUrl}/promotions`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to create promotion');
+      }
+      return res.json();
+    });
+  },
+  trackClick: (id: string) => request<{ success: boolean }>(`/promotions/${id}/click`, 'POST'),
+  cancel: (id: string) => request<any>(`/promotions/${id}`, 'DELETE'),
+};
+
+const viewingsApi = {
+  schedule: (data: {
+    houseId: string;
+    agentId: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    notes?: string;
+    name?: string;
+    email?: string;
+    phone?: string;
+  }) => request<any>('/viewings/schedule', 'POST', { body: data }),
+  getMyViewings: () => request<any[]>('/viewings/my', 'GET'),
+  getAllViewings: () => request<any[]>('/viewings/admin/all', 'GET'),
+  updateStatus: (id: string, status: string) =>
+    request<any>(`/viewings/${id}/status`, 'PATCH', { body: { status } }),
 };
 
 export const api = {
@@ -365,5 +431,7 @@ export const api = {
   alerts: alertsApi,
   verifications: verificationsApi,
   admin: adminApi,
+  promotions: promotionsApi,
+  viewings: viewingsApi,
 };
 

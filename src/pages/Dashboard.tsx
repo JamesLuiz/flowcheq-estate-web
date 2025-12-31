@@ -130,15 +130,31 @@ const Dashboard = () => {
         featured: formState.featured,
         coordinates,
       }),
-    onSuccess: () => {
-      toast({
-        title: 'Listing created',
-        description: 'Your property has been published successfully.',
-      });
+    onSuccess: (data) => {
       setIsDialogOpen(false);
-      setFormState(initialFormState);
       housesQuery.refetch();
       statsQuery.refetch();
+      
+      // If marked as featured, redirect to promotion setup
+      if (formState.featured && data?.id) {
+        toast({
+          title: 'Property created',
+          description: 'Redirecting to promotion setup...',
+        });
+        navigate('/promotions/setup', {
+          state: {
+            propertyId: data.id,
+            propertyTitle: formState.title,
+            fromUpload: true,
+          },
+        });
+      } else {
+        toast({
+          title: 'Listing created',
+          description: 'Your property has been published successfully.',
+        });
+      }
+      setFormState(initialFormState);
     },
     onError: (error: Error) => {
       toast({
