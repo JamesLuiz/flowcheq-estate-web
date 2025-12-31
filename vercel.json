@@ -1,15 +1,7 @@
 {
-  "version": 3,
-  "functions": {
-    "backend/bot/api/*.py": {
-      "runtime": "python3.12"
-    }
-  },
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "rewrites": [
-    {
-      "source": "/api/telegram",
-      "destination": "/backend/bot/api/telegram.py"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
