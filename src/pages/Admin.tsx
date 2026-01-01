@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, CheckCircle, XCircle, Loader2, ArrowLeft, Eye, FileText, 
-  Image as ImageIcon, Megaphone, Users, TrendingUp, Ban, RefreshCw 
+  Image as ImageIcon, Megaphone, Users, TrendingUp, Ban, RefreshCw, CalendarCheck, Calendar, Mail, Phone, User
 } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { format } from 'date-fns';
 
 interface Verification {
   id: string;
@@ -77,6 +78,31 @@ interface Promotion {
   createdAt: string;
 }
 
+interface Viewing {
+  id: string;
+  houseId: {
+    id: string;
+    title: string;
+    location: string;
+  };
+  userId: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  agentId: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  scheduledDate: string;
+  scheduledTime: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  notes?: string;
+  createdAt: string;
+}
+
 const Admin = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -84,7 +110,7 @@ const Admin = () => {
   const queryClient = useQueryClient();
   
   // Main tab state
-  const [activeTab, setActiveTab] = useState<'verifications' | 'promotions'>('verifications');
+  const [activeTab, setActiveTab] = useState<'verifications' | 'promotions' | 'viewings'>('verifications');
   
   // Verification states
   const [selectedVerification, setSelectedVerification] = useState<Verification | null>(null);
@@ -109,6 +135,13 @@ const Admin = () => {
     queryKey: ['admin-promotions', promotionStatusFilter],
     queryFn: () => api.admin.getAllPromotions(promotionStatusFilter),
     enabled: isAuthenticated && user?.role === 'admin' && activeTab === 'promotions',
+  });
+
+  // Viewings query
+  const viewingsQuery = useQuery({
+    queryKey: ['admin-viewings'],
+    queryFn: () => api.viewings.getAllViewings(),
+    enabled: isAuthenticated && user?.role === 'admin' && activeTab === 'viewings',
   });
 
   const reviewMutation = useMutation({
@@ -192,6 +225,8 @@ const Admin = () => {
 
   const verifications = (verificationsQuery.data as Verification[]) || [];
   const promotions = (promotionsQuery.data as Promotion[]) || [];
+  const viewings = (viewingsQuery.data as Viewing[]) || [];
+  const pendingViewings = viewings.filter(v => v.status === 'pending').length;
 
   // Check if user is admin
   if (!isAuthenticated || user?.role !== 'admin') {
@@ -321,7 +356,7 @@ const Admin = () => {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsList className="grid w-full grid-cols-3 max-w-xl">
             <TabsTrigger value="verifications" className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Verifications</span>
@@ -331,6 +366,16 @@ const Admin = () => {
               <Megaphone className="h-4 w-4" />
               <span className="hidden sm:inline">Promotions</span>
               <span className="sm:hidden">Promo</span>
+            </TabsTrigger>
+            <TabsTrigger value="viewings" className="flex items-center gap-2">
+              <CalendarCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">Viewings</span>
+              <span className="sm:hidden">Views</span>
+              {pendingViewings > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                  {pendingViewings}
+                </Badge>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -556,6 +601,95 @@ const Admin = () => {
                                   </Button>
                                 )}
                               </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Viewings Tab */}
+          <TabsContent value="viewings" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarCheck className="h-5 w-5 text-primary" />
+                  All Viewing Requests
+                </CardTitle>
+                <CardDescription>
+                  Monitor all scheduled property viewings across the platform
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {viewingsQuery.isLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : viewings.length === 0 ? (
+                  <div className="text-center py-12">
+                    <CalendarCheck className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No viewing requests yet</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Property</TableHead>
+                          <TableHead className="hidden md:table-cell">User</TableHead>
+                          <TableHead className="hidden md:table-cell">Agent</TableHead>
+                          <TableHead>Schedule</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {viewings.map((viewing) => (
+                          <TableRow key={viewing.id}>
+                            <TableCell>
+                              <div>
+                                <p className="font-semibold text-sm line-clamp-1">{viewing.houseId?.title}</p>
+                                <p className="text-xs text-muted-foreground line-clamp-1">{viewing.houseId?.location}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              <div className="space-y-1">
+                                <p className="text-sm flex items-center gap-1">
+                                  <User className="h-3 w-3" />
+                                  {viewing.userId?.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Mail className="h-3 w-3" />
+                                  {viewing.userId?.email}
+                                </p>
+                                {viewing.userId?.phone && (
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Phone className="h-3 w-3" />
+                                    {viewing.userId.phone}
+                                  </p>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              <div>
+                                <p className="text-sm">{viewing.agentId?.name}</p>
+                                <p className="text-xs text-muted-foreground">{viewing.agentId?.email}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">
+                                <p className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {format(new Date(viewing.scheduledDate), 'PPP')}
+                                </p>
+                                <p className="text-xs text-muted-foreground">{viewing.scheduledTime}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {getStatusBadge(viewing.status)}
                             </TableCell>
                           </TableRow>
                         ))}

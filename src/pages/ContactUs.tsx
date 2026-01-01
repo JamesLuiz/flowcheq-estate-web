@@ -49,7 +49,11 @@ const ContactUs = () => {
 
   const handleWhatsApp = () => {
     const message = encodeURIComponent("Hello! I'd like to inquire about your properties.");
-    window.open(`https://wa.me/+2348146609734?text=${message}`, '_blank');
+    window.open(`https://wa.me/2349152087229?text=${message}`, '_blank');
+  };
+
+  const handleCall = () => {
+    window.open(`https://wa.me/2349152087229`, '_blank');
   };
 
   return (
@@ -132,7 +136,7 @@ const ContactUs = () => {
                   <div>
                     <h3 className="font-bold text-lg mb-2">Call Us</h3>
                     <p className="text-muted-foreground">
-                      House me: <a href="tel:+2348146609734">+234 814 660 9734</a><br />
+                      House me: <a href="https://wa.me/2349152087229" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">+234 915 208 7229</a><br />
                     </p>
                   </div>
                 </div>
@@ -144,7 +148,7 @@ const ContactUs = () => {
                   <div>
                     <h3 className="font-bold text-lg mb-2">Email Us</h3>
                     <p className="text-muted-foreground">
-                      House me: <a href="mailto:abujashoemall@gmail.com">abujashoemall@gmail.com</a><br />
+                      House me: <a href="mailto:housemedream@gmail.com" className="hover:text-primary transition-colors">housemedream@gmail.com</a><br />
                     </p>
                   </div>
                 </div>

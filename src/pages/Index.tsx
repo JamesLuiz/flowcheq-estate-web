@@ -7,7 +7,7 @@ import { HouseCard } from '@/components/HouseCard';
 import { FeaturedAgents } from '@/components/FeaturedAgents';
 import { SearchFilters } from '@/components/SearchFilters';
 import { FeaturedBanner } from '@/components/FeaturedBanner';
-import { FilterParams } from '@/types';
+import { FilterParams, House } from '@/types';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, BellRing, Loader2, RotateCcw } from 'lucide-react';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
@@ -15,6 +15,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import heroImage from '@/assets/hero-abuja.jpg';
+import { placeholderProperties } from '@/data/placeholderProperties';
 
 const Index = () => {
   const [filters, setFilters] = useState<FilterParams>({});
@@ -86,8 +87,11 @@ const Index = () => {
     refetchOnWindowFocus: false,
   });
 
-  const houses = housesQuery.data?.data ?? [];
+  const apiHouses = housesQuery.data?.data ?? [];
+  // Use placeholder properties if no real properties are available
+  const houses = apiHouses.length > 0 ? apiHouses : (placeholderProperties as House[]);
   const featuredHouses = houses.filter((house) => house.featured);
+  const showingPlaceholders = apiHouses.length === 0;
 
   useEffect(() => {
     if (!hasActiveFilters) return;
@@ -274,10 +278,20 @@ const Index = () => {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {houses.map((house) => (
-                <HouseCard key={house.id} house={house} />
-              ))}
+            <div className="space-y-4">
+              {showingPlaceholders && (
+                <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Sample Properties:</strong> These are example listings to showcase what's available on House me. 
+                    Real properties will appear once agents add listings.
+                  </p>
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {houses.map((house) => (
+                  <HouseCard key={house.id} house={house} />
+                ))}
+              </div>
             </div>
           )}
         </div>

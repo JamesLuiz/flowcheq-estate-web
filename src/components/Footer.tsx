@@ -62,15 +62,15 @@ export const Footer = () => {
               {/* FIX 2: Added justify-center md:justify-start to list items */}
               <li className="flex items-center justify-center md:justify-start gap-2 text-sm">
                 <Phone className="h-4 w-4 text-primary" />
-                <a href="tel:+2348012345678" className="text-muted-foreground hover:text-primary transition-colors">
-                  +234 801 234 5678
+                <a href="tel:+2349152087229" className="text-muted-foreground hover:text-primary transition-colors">
+                  +234 915 208 7229
                 </a>
               </li>
               {/* FIX 3: Added justify-center md:justify-start to list items */}
               <li className="flex items-center justify-center md:justify-start gap-2 text-sm">
                 <Mail className="h-4 w-4 text-primary" />
-                <a href="mailto:support@houseme.ng" className="text-muted-foreground hover:text-primary transition-colors">
-                  support@houseme.ng
+                <a href="mailto:housemedream@gmail.com" className="text-muted-foreground hover:text-primary transition-colors">
+                  housemedream@gmail.com
                 </a>
               </li>
               <li className="text-sm text-muted-foreground">

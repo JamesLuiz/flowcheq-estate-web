@@ -175,6 +175,22 @@ export const VirtualTour = ({ images, propertyTitle }: VirtualTourProps) => {
         </div>
       </div>
 
+      {/* Close Button for Dialog */}
+      {inDialog && (
+        <Button
+          size="icon"
+          variant="ghost"
+          className="absolute top-4 right-4 z-20 h-10 w-10 bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white rounded-full"
+          onClick={() => {
+            // Find and close the parent dialog
+            const closeButton = document.querySelector('[data-radix-collection-item]')?.closest('[role="dialog"]')?.querySelector('[aria-label="Close"]') as HTMLButtonElement;
+            closeButton?.click();
+          }}
+        >
+          <X className="h-5 w-5" />
+        </Button>
+      )}
+
       {/* Navigation Arrows */}
       {images.length > 1 && (
         <>
@@ -300,13 +316,26 @@ export const VirtualTour = ({ images, propertyTitle }: VirtualTourProps) => {
             Open Immersive Virtual Tour
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-[95vw] h-[90vh] p-0">
+        <DialogContent className="max-w-[95vw] h-[90vh] p-0" onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader className="absolute top-4 left-4 z-20">
             <DialogTitle className="text-white bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg">
               {propertyTitle} - Virtual Tour
             </DialogTitle>
           </DialogHeader>
           <TourContent inDialog />
+          {/* Explicit Close Button */}
+          <Button
+            size="sm"
+            variant="secondary"
+            className="absolute bottom-4 right-4 z-20"
+            onClick={() => {
+              const closeBtn = document.querySelector('[data-state="open"] button[aria-label="Close"]') as HTMLButtonElement;
+              closeBtn?.click();
+            }}
+          >
+            <X className="h-4 w-4 mr-2" />
+            Close Tour
+          </Button>
         </DialogContent>
       </Dialog>
 

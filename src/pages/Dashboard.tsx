@@ -1,10 +1,11 @@
 import { FormEvent, useMemo, useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Home as HomeIcon, TrendingUp, Eye, Loader2, Edit, Trash2, User } from 'lucide-react';
+import { Plus, Home as HomeIcon, TrendingUp, Eye, Loader2, Edit, Trash2, User, ShieldAlert } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { HouseCard } from '@/components/HouseCard';
-import { VerificationPanel } from '@/components/VerificationPanel';
+import { VerificationDialog } from '@/components/VerificationDialog';
+import { ViewingManagement } from '@/components/ViewingScheduler';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -106,6 +107,7 @@ const Dashboard = () => {
   const [editStateOpen, setEditStateOpen] = useState(false);
 
   const isAgent = user?.role === 'agent' || user?.role === 'landlord';
+  const isVerified = user?.verified && user?.verificationStatus === 'approved';
 
   const housesQuery = useQuery({
     queryKey: ['agent-houses', user?.id],
@@ -458,11 +460,34 @@ const Dashboard = () => {
           </Card>
         </div>
 
+        {/* Verification Dialog */}
         <div className="mb-8">
-          <VerificationPanel />
+          <VerificationDialog />
+        </div>
+
+        {/* Viewing Management */}
+        <div className="mb-8">
+          <ViewingManagement />
         </div>
 
         <div className="mb-6">
+          {!isVerified ? (
+            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex items-center gap-3">
+                <ShieldAlert className="h-6 w-6 text-destructive" />
+                <div>
+                  <h3 className="font-semibold text-destructive">Verification Required</h3>
+                  <p className="text-sm text-muted-foreground">
+                    You must be verified to add properties. Complete your verification above.
+                  </p>
+                </div>
+              </div>
+              <Button disabled className="w-full sm:w-auto" size="lg">
+                <Plus className="mr-2 h-5 w-5" />
+                Add New Property
+              </Button>
+            </div>
+          ) : (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button size="lg" className="w-full sm:w-auto">
@@ -739,6 +764,7 @@ const Dashboard = () => {
               </form>
             </DialogContent>
           </Dialog>
+          )}
 
           {/* Edit Dialog */}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
