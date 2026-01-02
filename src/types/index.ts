@@ -37,6 +37,11 @@ export interface House {
   whatsappClicks?: number;
   createdAt?: string;
   updatedAt?: string;
+  // Shared Property (2-to-Tango) fields
+  isShared?: boolean;
+  totalSlots?: number;
+  availableSlots?: number;
+  bookedByUsers?: string[];
 }
 
 export interface FilterParams {

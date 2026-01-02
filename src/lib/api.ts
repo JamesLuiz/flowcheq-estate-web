@@ -212,7 +212,7 @@ async function requestWithFiles<T>(
 }
 
 const housesApi = {
-  list: (filters?: FilterParams & { featured?: boolean; lat?: number; lng?: number; radius?: number }) => {
+  list: (filters?: FilterParams & { featured?: boolean; lat?: number; lng?: number; radius?: number; shared?: boolean }) => {
     const params: Record<string, string | number> = {};
     
     // Only add non-undefined, non-null, non-empty values
@@ -226,6 +226,7 @@ const housesApi = {
     if (filters?.lat !== undefined && filters.lat !== null) params.lat = filters.lat;
     if (filters?.lng !== undefined && filters.lng !== null) params.lng = filters.lng;
     if (filters?.radius !== undefined && filters.radius !== null) params.radius = filters.radius;
+    if (filters?.shared !== undefined) params.shared = String(filters.shared);
     
     return request<{ data: House[]; pagination: { total: number; limit: number; skip: number } }>(
       '/houses',
@@ -253,6 +254,17 @@ const housesApi = {
   trackWhatsAppClick: (id: string) =>
     request<{ success: boolean }>(`/houses/${id}/whatsapp-click`, 'POST'),
   getStats: () => request<{ totalListings: number; totalViews: number; inquiries: number }>('/houses/stats/me', 'GET'),
+  listShared: (filters?: { minPrice?: number; maxPrice?: number; location?: string }) => {
+    return api.houses.list({
+      shared: true,
+      minPrice: filters?.minPrice,
+      maxPrice: filters?.maxPrice,
+      location: filters?.location,
+    });
+  },
+  bookSlot: (id: string) => request<{ success: boolean; message: string; availableSlots: number }>(`/houses/${id}/slots/book`, 'POST'),
+  cancelSlot: (id: string) => request<{ success: boolean; message: string; availableSlots: number }>(`/houses/${id}/slots/cancel`, 'POST'),
+  getCoTenants: (id: string) => request<{ coTenants: Agent[] }>(`/houses/${id}/slots/co-tenants`, 'GET'),
 };
 
 const agentsApi = {

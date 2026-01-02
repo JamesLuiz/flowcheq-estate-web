@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import HouseDetails from "./pages/HouseDetails";
 import AgentProfile from "./pages/AgentProfile";
 import AgentCatalogue from "./pages/AgentCatalogue";
+import AgentGuide from "./pages/AgentGuide";
+import SharedProperties from "./pages/SharedProperties";
 import Admin from "./pages/Admin";
 import Dashboard from "./pages/Dashboard";
 import UserDashboard from "./pages/UserDashboard";
@@ -40,6 +42,8 @@ const App = () => (
               <Route path="/agent/:id" element={<AgentProfile />} />
               <Route path="/agents/:id" element={<AgentProfile />} />
               <Route path="/agents/:id/catalogue" element={<AgentCatalogue />} />
+              <Route path="/agent-guide" element={<AgentGuide />} />
+              <Route path="/shared-properties" element={<SharedProperties />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/user-dashboard" element={<UserDashboard />} />

@@ -92,6 +92,9 @@ const initialFormState = {
   images: [] as File[],
   featured: false,
   coordinates: undefined as { lat: number; lng: number } | undefined,
+  // Shared property fields
+  isShared: false,
+  totalSlots: '',
 };
 
 const Dashboard = () => {
@@ -131,6 +134,8 @@ const Dashboard = () => {
         images: formState.images,
         featured: formState.featured,
         coordinates,
+        isShared: formState.isShared,
+        totalSlots: formState.isShared ? Number(formState.totalSlots) : undefined,
       }),
     onSuccess: (data) => {
       setIsDialogOpen(false);
@@ -180,6 +185,8 @@ const Dashboard = () => {
         area: Number(formState.area),
         featured: formState.featured,
         coordinates,
+        isShared: formState.isShared,
+        totalSlots: formState.isShared ? Number(formState.totalSlots) : undefined,
       }),
     onSuccess: () => {
       toast({
@@ -253,6 +260,8 @@ const Dashboard = () => {
       images: [],
       featured: house.featured || false,
       coordinates: house.coordinates,
+      isShared: (house as any).isShared || false,
+      totalSlots: String((house as any).totalSlots || ''),
     });
     setIsEditDialogOpen(true);
   };
@@ -740,6 +749,51 @@ const Dashboard = () => {
                   <Label htmlFor="featured" className="text-sm">
                     Mark as featured property
                   </Label>
+                </div>
+
+                {/* Shared Property Toggle */}
+                <div className="space-y-3 p-4 border rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="isShared"
+                      type="checkbox"
+                      checked={formState.isShared}
+                      onChange={(event) =>
+                        setFormState((prev) => ({ 
+                          ...prev, 
+                          isShared: event.target.checked,
+                          totalSlots: event.target.checked ? '2' : ''
+                        }))
+                      }
+                    />
+                    <Label htmlFor="isShared" className="text-sm font-medium">
+                      🤝 Shared Property (2-to-Tango)
+                    </Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Enable this if the property can be rented by multiple tenants in separate slots.
+                  </p>
+                  
+                  {formState.isShared && (
+                    <div className="space-y-2">
+                      <Label htmlFor="totalSlots">Number of Slots Available</Label>
+                      <Input
+                        id="totalSlots"
+                        type="number"
+                        min="2"
+                        max="10"
+                        placeholder="2"
+                        value={formState.totalSlots}
+                        onChange={(event) =>
+                          setFormState((prev) => ({ ...prev, totalSlots: event.target.value }))
+                        }
+                        required={formState.isShared}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        How many tenants can share this property? (2-10)
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <Button

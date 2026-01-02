@@ -50,6 +50,9 @@ export const Navbar = () => {
             <Link to="/" className="text-foreground hover:text-primary transition-colors">
               Home
             </Link>
+            <Link to="/shared-properties" className="text-foreground hover:text-primary transition-colors">
+              Shared Living
+            </Link>
             <Link to="/search-map" className="text-foreground hover:text-primary transition-colors">
               Map View
             </Link>
@@ -76,12 +79,20 @@ export const Navbar = () => {
                     </Link>
                   </DropdownMenuItem>
                   {(user?.role === 'agent' || user?.role === 'landlord') && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/profile/edit" className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <span>Edit Profile</span>
-                      </Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/profile/edit" className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          <span>Edit Profile</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/agent-guide" className="flex items-center gap-2">
+                          <Home className="h-4 w-4" />
+                          <span>Agent Guide</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
                   )}
                   {user?.role === 'admin' && (
                     <DropdownMenuItem asChild>
@@ -128,6 +139,13 @@ export const Navbar = () => {
               onClick={() => setMobileMenuOpen(false)}
             >
               Home
+            </Link>
+            <Link
+              to="/shared-properties"
+              className="block text-foreground hover:text-primary transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Shared Living
             </Link>
             <Link
               to="/search-map"

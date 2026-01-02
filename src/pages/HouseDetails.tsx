@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Bed,
   Bath,
@@ -12,10 +12,13 @@ import {
   Share2,
   Heart,
   Loader2,
+  Users,
+  UserCheck,
+  UserX,
 } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { HouseMapView } from '@/components/HouseMapView';
 import { VirtualTour } from '@/components/VirtualTour';
@@ -24,6 +27,13 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('en-NG', {
@@ -39,9 +49,11 @@ const HouseDetails = () => {
   const { toggleFavorite, isFavorite } = useFavorites();
   const { isAuthenticated, user } = useAuth();
   const [selectedImage, setSelectedImage] = useState(0);
+  const queryClient = useQueryClient();
   
   // Only users (not agents/landlords) can favorite properties
   const canFavorite = isAuthenticated && user?.role === 'user';
+  
 
   const houseQuery = useQuery({
     queryKey: ['house', id],
@@ -57,6 +69,54 @@ const HouseDetails = () => {
   const house = houseQuery.data;
   const agent = house?.agent;
   const isHouseFavorite = house ? isFavorite(house.id) : false;
+  
+  // Check if user has booked a slot
+  const hasBookedSlot = house?.bookedByUsers?.includes(user?.id || '') || false;
+  
+  // Co-tenants query
+  const coTenantsQuery = useQuery({
+    queryKey: ['co-tenants', id],
+    queryFn: () => api.houses.getCoTenants(id as string),
+    enabled: Boolean(id) && isAuthenticated && Boolean(house?.isShared) && hasBookedSlot,
+  });
+  
+  // Slot booking mutations
+  const bookSlotMutation = useMutation({
+    mutationFn: () => api.houses.bookSlot(id as string),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['house', id] });
+      toast({
+        title: 'Slot booked!',
+        description: 'You have successfully booked a slot in this shared property.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to book slot',
+        description: error.message,
+      });
+    },
+  });
+  
+  const cancelSlotMutation = useMutation({
+    mutationFn: () => api.houses.cancelSlot(id as string),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['house', id] });
+      queryClient.invalidateQueries({ queryKey: ['co-tenants', id] });
+      toast({
+        title: 'Slot cancelled',
+        description: 'Your slot has been cancelled successfully.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to cancel slot',
+        description: error.message,
+      });
+    },
+  });
 
   const shareViaWhatsApp = () => {
     if (!house) return;
@@ -216,6 +276,16 @@ const HouseDetails = () => {
                 {house.featured && (
                   <Badge className="absolute top-4 right-4 bg-accent text-accent-foreground">
                     Featured
+                  </Badge>
+                )}
+                {house.isShared && (
+                  <Badge className="absolute top-4 right-4 bg-primary text-primary-foreground">
+                    🤝 Shared Property
+                  </Badge>
+                )}
+                {house.isShared && (house.availableSlots || 0) === 0 && (
+                  <Badge className="absolute top-16 right-4 bg-destructive text-destructive-foreground">
+                    Fully Booked
                   </Badge>
                 )}
               </div>
@@ -393,6 +463,150 @@ const HouseDetails = () => {
                         </Link>
                       )}
 
+                      {/* Shared Property Slot Booking */}
+                      {house.isShared && isAuthenticated && user?.role === 'user' && (
+                        <div className="space-y-3 pt-4 border-t border-border">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-semibold text-sm mb-1">Available Slots</h4>
+                              <p className="text-xs text-muted-foreground">
+                                {house.availableSlots || 0} of {house.totalSlots || 0} slots available
+                              </p>
+                            </div>
+                            {hasBookedSlot && (
+                              <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400">
+                                <UserCheck className="h-3 w-3 mr-1" />
+                                Slot Booked
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          {!hasBookedSlot && (house.availableSlots || 0) > 0 && (
+                            <Button
+                              onClick={() => bookSlotMutation.mutate()}
+                              disabled={bookSlotMutation.isPending}
+                              className="w-full"
+                              size="lg"
+                            >
+                              {bookSlotMutation.isPending ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Booking...
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck className="mr-2 h-4 w-4" />
+                                  Book a Slot
+                                </>
+                              )}
+                            </Button>
+                          )}
+                          
+                          {hasBookedSlot && (
+                            <Button
+                              onClick={() => {
+                                if (confirm('Are you sure you want to cancel your slot booking?')) {
+                                  cancelSlotMutation.mutate();
+                                }
+                              }}
+                              disabled={cancelSlotMutation.isPending}
+                              variant="destructive"
+                              className="w-full"
+                              size="lg"
+                            >
+                              {cancelSlotMutation.isPending ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Cancelling...
+                                </>
+                              ) : (
+                                <>
+                                  <UserX className="mr-2 h-4 w-4" />
+                                  Cancel My Slot
+                                </>
+                              )}
+                            </Button>
+                          )}
+                          
+                          {hasBookedSlot && (
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" className="w-full" size="lg">
+                                  <Users className="mr-2 h-4 w-4" />
+                                  View Co-Tenants
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Co-Tenants</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  {coTenantsQuery.isLoading ? (
+                                    <div className="flex items-center justify-center py-8">
+                                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                    </div>
+                                  ) : coTenantsQuery.data?.coTenants && coTenantsQuery.data.coTenants.length > 0 ? (
+                                    <div className="space-y-3">
+                                      {coTenantsQuery.data.coTenants.map((coTenant) => (
+                                        <Card key={coTenant.id}>
+                                          <CardContent className="p-4">
+                                            <div className="flex items-center gap-4">
+                                              <img
+                                                src={
+                                                  coTenant.avatarUrl ||
+                                                  `https://api.dicebear.com/7.x/initials/svg?seed=${coTenant.name}`
+                                                }
+                                                alt={coTenant.name}
+                                                className="w-12 h-12 rounded-full object-cover"
+                                              />
+                                              <div className="flex-1">
+                                                <h4 className="font-semibold">{coTenant.name}</h4>
+                                                <p className="text-sm text-muted-foreground">{coTenant.email}</p>
+                                                {coTenant.phone && (
+                                                  <p className="text-sm text-muted-foreground">{coTenant.phone}</p>
+                                                )}
+                                              </div>
+                                              <div className="flex gap-2">
+                                                {coTenant.phone && (
+                                                  <Button
+                                                    size="icon"
+                                                    variant="outline"
+                                                    asChild
+                                                    className="h-9 w-9"
+                                                  >
+                                                    <a href={`tel:${coTenant.phone}`}>
+                                                      <Phone className="h-4 w-4" />
+                                                    </a>
+                                                  </Button>
+                                                )}
+                                                <Button
+                                                  size="icon"
+                                                  variant="outline"
+                                                  asChild
+                                                  className="h-9 w-9"
+                                                >
+                                                  <a href={`mailto:${coTenant.email}`}>
+                                                    <Mail className="h-4 w-4" />
+                                                  </a>
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          </CardContent>
+                                        </Card>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-center text-muted-foreground py-8">
+                                      No co-tenants yet. Be the first to book a slot!
+                                    </p>
+                                  )}
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          )}
+                        </div>
+                      )}
+                      
                       {/* Viewing Scheduler */}
                       {agent?.id && (
                         <ViewingScheduler 

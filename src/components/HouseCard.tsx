@@ -104,14 +104,31 @@ export const HouseCard = ({ house }: HouseCardProps) => {
               />
             </button>
           )}
-          {house.featured && (
-            <Badge className="absolute top-4 left-4 bg-accent text-accent-foreground">
-              Featured
+          <div className="absolute top-4 left-4 flex flex-col gap-2">
+            {house.featured && (
+              <Badge className="bg-accent text-accent-foreground">
+                Featured
+              </Badge>
+            )}
+            {house.isShared && (
+              <Badge className="bg-primary text-primary-foreground">
+                🤝 Shared
+              </Badge>
+            )}
+          </div>
+          {house.isShared && (house.availableSlots || 0) === 0 && (
+            <Badge className="absolute top-4 right-4 bg-destructive text-destructive-foreground">
+              Fully Booked
             </Badge>
           )}
           <Badge className="absolute bottom-4 left-4 bg-background/90 text-foreground capitalize">
             {house.type}
           </Badge>
+          {house.isShared && (house.availableSlots || 0) > 0 && (
+            <Badge className="absolute bottom-4 right-4 bg-background/90 text-foreground">
+              {house.availableSlots}/{house.totalSlots} slots
+            </Badge>
+          )}
         </div>
 
         <CardContent className="p-4 space-y-3">
