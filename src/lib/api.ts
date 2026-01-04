@@ -212,7 +212,7 @@ async function requestWithFiles<T>(
 }
 
 const housesApi = {
-  list: (filters?: FilterParams & { featured?: boolean; lat?: number; lng?: number; radius?: number; shared?: boolean }) => {
+  list: (filters?: FilterParams & { featured?: boolean; lat?: number; lng?: number; radius?: number; shared?: boolean; listingType?: 'rent' | 'buy' }) => {
     const params: Record<string, string | number> = {};
     
     // Only add non-undefined, non-null, non-empty values
@@ -227,6 +227,7 @@ const housesApi = {
     if (filters?.lng !== undefined && filters.lng !== null) params.lng = filters.lng;
     if (filters?.radius !== undefined && filters.radius !== null) params.radius = filters.radius;
     if (filters?.shared !== undefined) params.shared = String(filters.shared);
+    if (filters?.listingType) params.listingType = filters.listingType;
     
     return request<{ data: House[]; pagination: { total: number; limit: number; skip: number } }>(
       '/houses',
@@ -392,6 +393,52 @@ const adminApi = {
     request<{ success: boolean; platformFeePercentage: number; message: string }>('/admin/viewing-fees/platform-fee-percentage', 'PATCH', {
       body: { platformFeePercentage: percentage },
     }),
+  // Unverified agents
+  getUnverifiedAgents: () => request<{ data: Agent[] }>('/admin/agents/unverified', 'GET'),
+  sendBulkEmailToUnverifiedAgents: (message?: string) =>
+    request<{ success: boolean; message: string; successCount: number; failCount: number; total: number }>(
+      '/admin/agents/unverified/bulk-email',
+      'POST',
+      { body: { message } },
+    ),
+  // Agent management
+  getAllAgents: (status?: string) => {
+    const params = status ? { status } : {};
+    return request<{ data: Agent[] }>('/admin/agents', 'GET', { params });
+  },
+  suspendAgent: (agentId: string, reason?: string, suspendedUntil?: string) =>
+    request<Agent>(`/admin/agents/${agentId}/suspend`, 'PATCH', {
+      body: { reason, suspendedUntil },
+    }),
+  banAgent: (agentId: string, reason?: string) =>
+    request<Agent>(`/admin/agents/${agentId}/ban`, 'PATCH', {
+      body: { reason },
+    }),
+  activateAgent: (agentId: string, reason?: string) =>
+    request<Agent>(`/admin/agents/${agentId}/activate`, 'PATCH', {
+      body: { reason },
+    }),
+  deleteAgent: (agentId: string, reason?: string) =>
+    request<{ success: boolean; message: string }>(`/admin/agents/${agentId}`, 'DELETE', {
+      body: { reason },
+    }),
+  delistAgentProperties: (agentId: string, reason?: string) =>
+    request<{ success: boolean; message: string }>(`/admin/agents/${agentId}/delist-properties`, 'POST', {
+      body: { reason },
+    }),
+  // Property management
+  getAllProperties: (flagged?: boolean) => {
+    const params = flagged !== undefined ? { flagged: String(flagged) } : {};
+    return request<{ data: House[] }>('/admin/properties', 'GET', { params });
+  },
+  flagProperty: (propertyId: string, reason?: string) =>
+    request<House>(`/admin/properties/${propertyId}/flag`, 'PATCH', {
+      body: { reason },
+    }),
+  unflagProperty: (propertyId: string) =>
+    request<House>(`/admin/properties/${propertyId}/unflag`, 'PATCH'),
+  deleteProperty: (propertyId: string) =>
+    request<{ success: boolean; message: string }>(`/admin/properties/${propertyId}`, 'DELETE'),
 };
 
 const promotionsApi = {

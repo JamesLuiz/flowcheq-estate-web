@@ -98,6 +98,8 @@ const initialFormState = {
   totalSlots: '',
   // Viewing fee
   viewingFee: '',
+  // Listing type
+  listingType: 'buy' as 'rent' | 'buy',
 };
 
 const Dashboard = () => {
@@ -209,7 +211,8 @@ const Dashboard = () => {
         isShared: formState.isShared,
         totalSlots: formState.isShared ? Number(formState.totalSlots) : undefined,
         viewingFee: formState.viewingFee ? Number(formState.viewingFee) : undefined,
-      }),
+        listingType: formState.listingType,
+      } as any),
     onSuccess: (data) => {
       setIsDialogOpen(false);
       housesQuery.refetch();
@@ -261,7 +264,8 @@ const Dashboard = () => {
         isShared: formState.isShared,
         totalSlots: formState.isShared ? Number(formState.totalSlots) : undefined,
         viewingFee: formState.viewingFee ? Number(formState.viewingFee) : undefined,
-      }),
+        listingType: formState.listingType,
+      } as any),
     onSuccess: () => {
       toast({
         title: 'Listing updated',
@@ -337,6 +341,7 @@ const Dashboard = () => {
       isShared: (house as any).isShared || false,
       totalSlots: String((house as any).totalSlots || ''),
       viewingFee: String((house as any).viewingFee || ''),
+      listingType: (house as any).listingType || 'buy',
     });
     setIsEditDialogOpen(true);
   };
@@ -928,6 +933,25 @@ const Dashboard = () => {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="listingType">Listing Type</Label>
+                    <Select
+                      value={formState.listingType}
+                      onValueChange={(value: 'rent' | 'buy') =>
+                        setFormState((prev) => ({ ...prev, listingType: value }))
+                      }
+                      required
+                    >
+                      <SelectTrigger id="listingType">
+                        <SelectValue placeholder="Select listing type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="buy">For Sale</SelectItem>
+                        <SelectItem value="rent">For Rent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -1261,6 +1285,25 @@ const Dashboard = () => {
                         <SelectItem value="bungalow">Bungalow</SelectItem>
                         <SelectItem value="apartment">Apartment</SelectItem>
                         <SelectItem value="mansion">Mansion</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-listingType">Listing Type</Label>
+                    <Select
+                      value={formState.listingType}
+                      onValueChange={(value: 'rent' | 'buy') =>
+                        setFormState((prev) => ({ ...prev, listingType: value }))
+                      }
+                      required
+                    >
+                      <SelectTrigger id="edit-listingType">
+                        <SelectValue placeholder="Select listing type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="buy">For Sale</SelectItem>
+                        <SelectItem value="rent">For Rent</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

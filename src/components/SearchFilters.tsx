@@ -127,6 +127,20 @@ export const SearchFilters = ({ onFilterChange }: SearchFiltersProps) => {
               onChange={(e) => handleFilterChange('location', e.target.value)}
             />
           </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Listing Type</label>
+            <Select onValueChange={(value) => handleFilterChange('listingType', value === 'all' ? undefined : value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="All listings" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All listings</SelectItem>
+                <SelectItem value="buy">For Sale</SelectItem>
+                <SelectItem value="rent">For Rent</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       )}
     </div>

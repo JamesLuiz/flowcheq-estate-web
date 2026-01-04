@@ -5,16 +5,21 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { VerificationBadge } from '@/components/VerificationBadge';
 import { api } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 export const FeaturedAgents = () => {
+  const { isAuthenticated } = useAuth();
+  
   const agentsQuery = useQuery({
     queryKey: ['featured-agents'],
     queryFn: () => api.agents.list({ limit: 6, verified: true }),
+    enabled: isAuthenticated, // Only fetch when user is logged in
   });
 
   const agents = agentsQuery.data?.data ?? [];
 
-  if (agents.length === 0) return null;
+  // Only show section if user is logged in and there are agents
+  if (!isAuthenticated || agents.length === 0) return null;
 
   return (
     <section className="py-16 bg-gradient-to-br from-background via-primary/5 to-background">

@@ -32,6 +32,10 @@ import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
+import { UnverifiedAgentsManager } from '@/components/admin/UnverifiedAgentsManager';
+import { AgentsManager } from '@/components/admin/AgentsManager';
+import { PropertiesManager } from '@/components/admin/PropertiesManager';
+import { Input } from '@/components/ui/input';
 
 interface Verification {
   id: string;
@@ -117,7 +121,8 @@ const Admin = () => {
   const queryClient = useQueryClient();
   
   // Main tab state
-  const [activeTab, setActiveTab] = useState<'verifications' | 'promotions' | 'viewings'>('verifications');
+  const [activeTab, setActiveTab] = useState<'verifications' | 'promotions' | 'viewings' | 'agents' | 'properties'>('verifications');
+  const [platformFeeInput, setPlatformFeeInput] = useState<string>('');
   
   // Verification states
   const [selectedVerification, setSelectedVerification] = useState<Verification | null>(null);
@@ -156,6 +161,9 @@ const Admin = () => {
     queryKey: ['platform-fee-percentage'],
     queryFn: () => api.admin.getPlatformFeePercentage(),
     enabled: isAuthenticated && user?.role === 'admin' && activeTab === 'viewings',
+    onSuccess: (data) => {
+      setPlatformFeeInput(String(data.platformFeePercentage || 10));
+    },
   });
 
   // Total agents query (for stats)
@@ -179,7 +187,7 @@ const Admin = () => {
         title: 'Platform fee updated',
         description: 'Platform fee percentage has been updated successfully.',
       });
-      platformFeeQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['platform-fee-percentage'] });
     },
     onError: (error: Error) => {
       toast({
@@ -427,7 +435,7 @@ const Admin = () => {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 max-w-xl">
+          <TabsList className="grid w-full grid-cols-5 max-w-4xl">
             <TabsTrigger value="verifications" className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Verifications</span>
@@ -447,6 +455,16 @@ const Admin = () => {
                   {pendingViewings}
                 </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="agents" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Agents</span>
+              <span className="sm:hidden">Agents</span>
+            </TabsTrigger>
+            <TabsTrigger value="properties" className="flex items-center gap-2">
+              <Home className="h-4 w-4" />
+              <span className="hidden sm:inline">Properties</span>
+              <span className="sm:hidden">Props</span>
             </TabsTrigger>
           </TabsList>
 
@@ -738,9 +756,48 @@ const Admin = () => {
                         {platformFeeQuery.data?.platformFeePercentage || 10}%
                       </Badge>
                     </div>
-                    <div className="p-4 bg-muted rounded-lg">
-                      <p className="text-sm text-muted-foreground">
-                        <strong>Note:</strong> To change the platform fee percentage, update the VIEWING_FEE_PERCENTAGE environment variable and restart the server.
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <Label htmlFor="platformFee">Platform Fee Percentage (%)</Label>
+                          <Input
+                            id="platformFee"
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={platformFeeInput}
+                            onChange={(e) => setPlatformFeeInput(e.target.value)}
+                            placeholder="10"
+                          />
+                        </div>
+                        <Button
+                          onClick={() => {
+                            const percentage = parseFloat(platformFeeInput);
+                            if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+                              toast({
+                                variant: 'destructive',
+                                title: 'Invalid percentage',
+                                description: 'Please enter a number between 0 and 100',
+                              });
+                              return;
+                            }
+                            updatePlatformFeeMutation.mutate(percentage);
+                          }}
+                          disabled={updatePlatformFeeMutation.isPending}
+                          className="mt-6"
+                        >
+                          {updatePlatformFeeMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Updating...
+                            </>
+                          ) : (
+                            'Update'
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Set the platform fee percentage deducted from viewing fees (0-100%).
                       </p>
                     </div>
                   </div>
@@ -875,6 +932,17 @@ const Admin = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Agents Tab */}
+          <TabsContent value="agents" className="space-y-4">
+            <UnverifiedAgentsManager />
+            <AgentsManager />
+          </TabsContent>
+
+          {/* Properties Tab */}
+          <TabsContent value="properties" className="space-y-4">
+            <PropertiesManager />
           </TabsContent>
         </Tabs>
       </div>

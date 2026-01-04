@@ -75,7 +75,8 @@ const Index = () => {
           (filters.type && filters.type !== 'all') ||
           filters.minPrice ||
           filters.maxPrice ||
-          filters.location,
+          filters.location ||
+          filters.listingType,
       ),
     [filters],
   );

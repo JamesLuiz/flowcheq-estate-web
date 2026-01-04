@@ -44,6 +44,8 @@ export interface House {
   bookedByUsers?: string[];
   // Viewing fee
   viewingFee?: number;
+  // Listing type
+  listingType?: 'rent' | 'buy';
 }
 
 export interface FilterParams {
@@ -58,4 +60,5 @@ export interface FilterParams {
   lng?: number;
   radius?: number;
   limit?: number;
+  listingType?: 'rent' | 'buy';
 }

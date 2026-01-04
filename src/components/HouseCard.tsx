@@ -115,6 +115,11 @@ export const HouseCard = ({ house }: HouseCardProps) => {
                 🤝 Shared
               </Badge>
             )}
+            {house.listingType && (
+              <Badge className={house.listingType === 'rent' ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'}>
+                {house.listingType === 'rent' ? 'For Rent' : 'For Sale'}
+              </Badge>
+            )}
           </div>
           {house.isShared && (house.availableSlots || 0) === 0 && (
             <Badge className="absolute top-4 right-4 bg-destructive text-destructive-foreground">
