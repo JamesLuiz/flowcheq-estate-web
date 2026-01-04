@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, CheckCircle, XCircle, Loader2, ArrowLeft, Eye, FileText, 
-  Image as ImageIcon, Megaphone, Users, TrendingUp, Ban, RefreshCw, CalendarCheck, Calendar, Mail, Phone, User
+  Image as ImageIcon, Megaphone, Users, TrendingUp, Ban, RefreshCw, CalendarCheck, Calendar, Mail, Phone, User, DollarSign, Percent, Settings, Image
 } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,7 @@ interface Verification {
     email: string;
     role: string;
     phone?: string;
+    verified?: boolean;
   };
   documentType: 'nin' | 'driver_license';
   documentUrl: string;
@@ -101,6 +102,12 @@ interface Viewing {
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   notes?: string;
   createdAt: string;
+  viewingFee?: number;
+  paymentStatus?: string;
+  receiptUrl?: string;
+  amountPaid?: number;
+  platformFee?: number;
+  agentAmount?: number;
 }
 
 const Admin = () => {
@@ -140,8 +147,47 @@ const Admin = () => {
   // Viewings query
   const viewingsQuery = useQuery({
     queryKey: ['admin-viewings'],
-    queryFn: () => api.viewings.getAllViewings(),
+    queryFn: () => api.admin.getAllViewingFees(),
     enabled: isAuthenticated && user?.role === 'admin' && activeTab === 'viewings',
+  });
+
+  // Platform fee percentage query
+  const platformFeeQuery = useQuery({
+    queryKey: ['platform-fee-percentage'],
+    queryFn: () => api.admin.getPlatformFeePercentage(),
+    enabled: isAuthenticated && user?.role === 'admin' && activeTab === 'viewings',
+  });
+
+  // Total agents query (for stats)
+  const agentsQuery = useQuery({
+    queryKey: ['admin-total-agents'],
+    queryFn: () => api.agents.list(),
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+
+  // Verified agents query (for stats)
+  const verifiedAgentsQuery = useQuery({
+    queryKey: ['admin-verified-agents'],
+    queryFn: () => api.agents.list({ verified: true }),
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+
+  const updatePlatformFeeMutation = useMutation({
+    mutationFn: (percentage: number) => api.admin.updatePlatformFeePercentage(percentage),
+    onSuccess: () => {
+      toast({
+        title: 'Platform fee updated',
+        description: 'Platform fee percentage has been updated successfully.',
+      });
+      platformFeeQuery.refetch();
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Update failed',
+        description: error.message,
+      });
+    },
   });
 
   const reviewMutation = useMutation({
@@ -227,6 +273,8 @@ const Admin = () => {
   const promotions = (promotionsQuery.data as Promotion[]) || [];
   const viewings = (viewingsQuery.data as Viewing[]) || [];
   const pendingViewings = viewings.filter(v => v.status === 'pending').length;
+  const totalAgents = agentsQuery.data?.data?.length || 0;
+  const verifiedAgents = verifiedAgentsQuery.data?.data?.length || 0;
 
   // Check if user is admin
   if (!isAuthenticated || user?.role !== 'admin') {
@@ -307,7 +355,7 @@ const Admin = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 md:mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6 md:mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -349,7 +397,30 @@ const Admin = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{verifications.length}</div>
+              {agentsQuery.isLoading ? (
+                <div className="flex items-center justify-center py-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="text-2xl font-bold">{totalAgents}</div>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <CheckCircle className="h-4 w-4" />
+                Verified Agents
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {verifiedAgentsQuery.isLoading ? (
+                <div className="flex items-center justify-center py-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="text-2xl font-bold">{verifiedAgents}</div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -472,6 +543,30 @@ const Admin = () => {
                                       <XCircle className="h-4 w-4" />
                                     </Button>
                                   </>
+                                )}
+                                {!verification.userId?.verified && verification.status !== 'approved' && (
+                                  <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={async () => {
+                                      try {
+                                        await api.admin.sendVerificationReminder(verification.userId.id);
+                                        toast({
+                                          title: 'Reminder Sent',
+                                          description: `Verification reminder sent to ${verification.userId.email}`,
+                                        });
+                                      } catch (error: any) {
+                                        toast({
+                                          variant: 'destructive',
+                                          title: 'Failed to send reminder',
+                                          description: error.message,
+                                        });
+                                      }
+                                    }}
+                                    title="Send verification reminder email"
+                                  >
+                                    <Mail className="h-4 w-4" />
+                                  </Button>
                                 )}
                               </div>
                             </TableCell>
@@ -614,14 +709,54 @@ const Admin = () => {
 
           {/* Viewings Tab */}
           <TabsContent value="viewings" className="space-y-4">
+            {/* Platform Fee Settings */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CalendarCheck className="h-5 w-5 text-primary" />
-                  All Viewing Requests
+                  <Settings className="h-5 w-5 text-primary" />
+                  Platform Fee Settings
                 </CardTitle>
                 <CardDescription>
-                  Monitor all scheduled property viewings across the platform
+                  Set the platform fee percentage deducted from viewing fees
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {platformFeeQuery.isLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="font-semibold">Current Platform Fee</p>
+                        <p className="text-sm text-muted-foreground">
+                          {platformFeeQuery.data?.platformFeePercentage || 10}% of viewing fee
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-lg">
+                        {platformFeeQuery.data?.platformFeePercentage || 10}%
+                      </Badge>
+                    </div>
+                    <div className="p-4 bg-muted rounded-lg">
+                      <p className="text-sm text-muted-foreground">
+                        <strong>Note:</strong> To change the platform fee percentage, update the VIEWING_FEE_PERCENTAGE environment variable and restart the server.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Viewing Fees List */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-primary" />
+                  Viewing Fees & Receipts
+                </CardTitle>
+                <CardDescription>
+                  Manage all property viewing requests, fees, and payment receipts
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -643,7 +778,10 @@ const Admin = () => {
                           <TableHead className="hidden md:table-cell">User</TableHead>
                           <TableHead className="hidden md:table-cell">Agent</TableHead>
                           <TableHead>Schedule</TableHead>
+                          <TableHead>Fee</TableHead>
+                          <TableHead>Payment</TableHead>
                           <TableHead>Status</TableHead>
+                          <TableHead>Receipt</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -689,7 +827,45 @@ const Admin = () => {
                               </div>
                             </TableCell>
                             <TableCell>
+                              {viewing.viewingFee ? (
+                                <div className="text-sm">
+                                  <p className="font-semibold">₦{viewing.viewingFee.toLocaleString()}</p>
+                                  {viewing.platformFee && viewing.agentAmount !== undefined && (
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      <p>Platform: ₦{((viewing.viewingFee * viewing.platformFee) / 100).toFixed(2)}</p>
+                                      <p>Agent: ₦{viewing.agentAmount.toLocaleString()}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No fee</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {viewing.paymentStatus ? (
+                                <Badge variant={viewing.paymentStatus === 'paid' ? 'default' : viewing.paymentStatus === 'pending' ? 'secondary' : 'destructive'} className="capitalize">
+                                  {viewing.paymentStatus}
+                                </Badge>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
                               {getStatusBadge(viewing.status)}
+                            </TableCell>
+                            <TableCell>
+                              {viewing.receiptUrl ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => window.open(viewing.receiptUrl, '_blank')}
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No receipt</span>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}

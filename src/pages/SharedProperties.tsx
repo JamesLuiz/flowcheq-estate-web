@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { HouseCard } from '@/components/HouseCard';
@@ -14,9 +15,11 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Search, Filter, Heart, Loader2 } from 'lucide-react';
+import { Users, Search, Filter, Heart, Loader2, Calendar, UserCheck, Eye } from 'lucide-react';
 import { api } from '@/lib/api';
 import { House } from '@/types';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const SharedProperties = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,6 +29,11 @@ const SharedProperties = () => {
     const saved = localStorage.getItem('sharedPropertyFavorites');
     return saved ? JSON.parse(saved) : [];
   });
+
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
     queryKey: ['shared-properties'],
@@ -55,6 +63,150 @@ const SharedProperties = () => {
       : [...favorites, propertyId];
     setFavorites(newFavorites);
     localStorage.setItem('sharedPropertyFavorites', JSON.stringify(newFavorites));
+  };
+
+  // Quick book slot mutation
+  const bookSlotMutation = useMutation({
+    mutationFn: (houseId: string) => api.houses.bookSlot(houseId),
+    onSuccess: () => {
+      toast({
+        title: 'Slot Booked!',
+        description: 'You have successfully booked a slot in this shared property.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['shared-properties'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Booking Failed',
+        description: error.response?.data?.message || 'Failed to book slot',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const hasUserBookedSlot = (property: any) => {
+    if (!user || !property.bookedByUsers) return false;
+    const userId = (user as any).id || (user as any)._id;
+    return property.bookedByUsers.some((id: string) => id === userId);
+  };
+
+  const handleQuickBook = (propertyId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please login to book a slot',
+        variant: 'destructive',
+      });
+      navigate('/auth');
+      return;
+    }
+    if (user?.role !== 'user') {
+      toast({
+        title: 'Not Allowed',
+        description: 'Only users can book slots',
+        variant: 'destructive',
+      });
+      return;
+    }
+    bookSlotMutation.mutate(propertyId);
+  };
+
+  const renderPropertyCard = (property: House & { totalSlots?: number; availableSlots?: number; bookedByUsers?: string[] }, showFavoriteHeart: boolean = true) => {
+    const isBooked = hasUserBookedSlot(property);
+    const slotsAvailable = (property.availableSlots || 0) > 0;
+    
+    return (
+      <div key={property.id} className="relative group">
+        {showFavoriteHeart && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2 z-10 bg-background/80 hover:bg-background"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavorite(property.id);
+            }}
+          >
+            <Heart className={`h-5 w-5 ${favorites.includes(property.id) ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} />
+          </Button>
+        )}
+        <HouseCard house={property} />
+        
+        {/* Enhanced slot info and actions */}
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <Badge 
+              variant="secondary" 
+              className={`${
+                !slotsAvailable 
+                  ? 'bg-destructive/10 text-destructive' 
+                  : isBooked 
+                    ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                    : 'bg-primary/10 text-primary'
+              }`}
+            >
+              <Users className="h-3 w-3 mr-1" />
+              {!slotsAvailable 
+                ? 'Fully Booked' 
+                : isBooked
+                  ? 'You have a slot'
+                  : `${property.availableSlots}/${property.totalSlots} slots`}
+            </Badge>
+            
+            {isBooked && (
+              <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400">
+                <UserCheck className="h-3 w-3 mr-1" />
+                Booked
+              </Badge>
+            )}
+          </div>
+          
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => navigate(`/property/${property.id}`)}
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              View Details
+            </Button>
+            
+            {!isBooked && slotsAvailable && user?.role === 'user' && (
+              <Button
+                size="sm"
+                className="flex-1"
+                onClick={(e) => handleQuickBook(property.id, e)}
+                disabled={bookSlotMutation.isPending}
+              >
+                {bookSlotMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <UserCheck className="h-4 w-4 mr-1" />
+                    Book Slot
+                  </>
+                )}
+              </Button>
+            )}
+            
+            {isBooked && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="flex-1"
+                onClick={() => navigate(`/property/${property.id}`)}
+              >
+                <Users className="h-4 w-4 mr-1" />
+                View Co-Tenants
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -115,34 +267,18 @@ const SharedProperties = () => {
         </Card>
 
         {/* Favorites Section */}
-        {favorites.length > 0 && (
+        {favorites.length > 0 && filteredProperties.some((p: House) => favorites.includes(p.id)) && (
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Heart className="h-5 w-5 text-red-500 fill-red-500" />
-              Your Favorites ({favorites.length})
+              Your Favorites ({filteredProperties.filter((p: House) => favorites.includes(p.id)).length})
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProperties
                 .filter((p: House) => favorites.includes(p.id))
-                .map((property: House & { totalSlots?: number; availableSlots?: number }) => (
-                  <div key={property.id} className="relative">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2 z-10 bg-white/80 hover:bg-white"
-                      onClick={() => toggleFavorite(property.id)}
-                    >
-                      <Heart className="h-5 w-5 text-red-500 fill-red-500" />
-                    </Button>
-                    <HouseCard house={property} />
-                    <div className="mt-2 flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-primary/10 text-primary">
-                        <Users className="h-3 w-3 mr-1" />
-                        {property.availableSlots || 0}/{property.totalSlots || 0} slots available
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+                .map((property: House & { totalSlots?: number; availableSlots?: number; bookedByUsers?: string[] }) => 
+                  renderPropertyCard(property, true)
+                )}
             </div>
           </div>
         )}
@@ -151,7 +287,7 @@ const SharedProperties = () => {
         <div>
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <Filter className="h-5 w-5 text-muted-foreground" />
-            All Shared Properties ({filteredProperties.length})
+            All Shared Properties ({filteredProperties.filter((p: House) => !favorites.includes(p.id)).length})
           </h2>
 
           {isLoading ? (
@@ -174,34 +310,9 @@ const SharedProperties = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProperties
                 .filter((p: House) => !favorites.includes(p.id))
-                .map((property: House & { totalSlots?: number; availableSlots?: number }) => (
-                  <div key={property.id} className="relative">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2 z-10 bg-white/80 hover:bg-white"
-                      onClick={() => toggleFavorite(property.id)}
-                    >
-                      <Heart className={`h-5 w-5 ${favorites.includes(property.id) ? 'text-red-500 fill-red-500' : 'text-gray-400'}`} />
-                    </Button>
-                    <HouseCard house={property} />
-                    <div className="mt-2 flex items-center gap-2">
-                      <Badge 
-                        variant="secondary" 
-                        className={`${
-                          (property.availableSlots || 0) === 0 
-                            ? 'bg-red-100 text-red-700' 
-                            : 'bg-primary/10 text-primary'
-                        }`}
-                      >
-                        <Users className="h-3 w-3 mr-1" />
-                        {(property.availableSlots || 0) === 0 
-                          ? 'Fully Booked' 
-                          : `${property.availableSlots}/${property.totalSlots} slots available`}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+                .map((property: House & { totalSlots?: number; availableSlots?: number; bookedByUsers?: string[] }) => 
+                  renderPropertyCard(property, true)
+                )}
             </div>
           )}
         </div>

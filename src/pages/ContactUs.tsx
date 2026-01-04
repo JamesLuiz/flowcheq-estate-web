@@ -80,14 +80,18 @@ const ContactUs = () => {
               <h2 className="text-2xl font-bold mb-6">Send us a Message</h2>
               <form ref={form} onSubmit={handleSubmit} className="space-y-4">
                 <div>
+                  <Label htmlFor="name" className="sr-only">Your Name</Label>
                   <Input
+                    id="name"
                     name="name"
                     placeholder="Your Name"
                     required
                   />
                 </div>
                 <div>
+                  <Label htmlFor="email" className="sr-only">Your Email</Label>
                   <Input
+                    id="email"
                     type="email"
                     name="email"
                     placeholder="Your Email"
@@ -95,7 +99,18 @@ const ContactUs = () => {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="subject" className="sr-only">Subject</Label>
+                  <Input
+                    id="subject"
+                    name="subject"
+                    placeholder="Subject"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="message" className="sr-only">Your Message</Label>
                   <Textarea
+                    id="message"
                     name="message"
                     placeholder="Your Message"
                     rows={5}

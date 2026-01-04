@@ -42,6 +42,8 @@ export interface House {
   totalSlots?: number;
   availableSlots?: number;
   bookedByUsers?: string[];
+  // Viewing fee
+  viewingFee?: number;
 }
 
 export interface FilterParams {

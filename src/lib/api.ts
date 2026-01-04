@@ -284,6 +284,15 @@ const agentsApi = {
       body: {},
     });
   },
+  getBankAccount: () => request<{ bankAccount: { bankName: string; accountNumber: string; accountName: string; bankCode: string } | null; walletBalance: number }>('/agents/me/bank-account', 'GET'),
+  updateBankAccount: (bankAccount: { bankName: string; accountNumber: string; accountName: string; bankCode: string }) =>
+    request<Agent>('/agents/me/bank-account', 'PATCH', { body: { bankAccount } }),
+  withdrawFunds: (amount: number) =>
+    request<{ success: boolean; transferId: string; reference: string; status: string; amount: number; message: string }>(
+      '/agents/me/withdraw',
+      'POST',
+      { body: { amount } },
+    ),
 };
 
 const reviewsApi = {
@@ -374,6 +383,15 @@ const adminApi = {
   },
   activatePromotion: (id: string) => request<any>(`/admin/promotions/${id}/activate`, 'PATCH'),
   cancelPromotion: (id: string) => request<any>(`/admin/promotions/${id}`, 'DELETE'),
+  sendVerificationReminder: (agentId: string) => 
+    request<{ success: boolean; message: string }>(`/admin/send-verification-reminder/${agentId}`, 'POST'),
+  // Viewing fees management
+  getAllViewingFees: () => request<any[]>('/admin/viewing-fees', 'GET'),
+  getPlatformFeePercentage: () => request<{ platformFeePercentage: number }>('/admin/viewing-fees/platform-fee-percentage', 'GET'),
+  updatePlatformFeePercentage: (percentage: number) =>
+    request<{ success: boolean; platformFeePercentage: number; message: string }>('/admin/viewing-fees/platform-fee-percentage', 'PATCH', {
+      body: { platformFeePercentage: percentage },
+    }),
 };
 
 const promotionsApi = {
@@ -433,6 +451,38 @@ const viewingsApi = {
   getAllViewings: () => request<any[]>('/viewings/admin/all', 'GET'),
   updateStatus: (id: string, status: string) =>
     request<any>(`/viewings/${id}/status`, 'PATCH', { body: { status } }),
+  uploadReceipt: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append('receipt', file);
+    const token = getAuthToken();
+    const baseUrl = getApiBaseUrl();
+    return fetch(`${baseUrl}/viewings/${id}/receipt`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to upload receipt');
+      }
+      return res.json();
+    });
+  },
+};
+
+const messagesApi = {
+  send: (data: { receiverId: string; content: string; houseId?: string; conversationType?: 'tenant-agent' | 'co-tenant' }) =>
+    request<any>('/messages', 'POST', { body: data }),
+  getConversations: () => request<any[]>('/messages/conversations', 'GET'),
+  getMessages: (partnerId: string, houseId?: string) => {
+    const params: Record<string, string> = {};
+    if (houseId) params.houseId = houseId;
+    return request<any[]>(`/messages/conversation/${partnerId}`, 'GET', { params });
+  },
+  getUnreadCount: () => request<{ unreadCount: number }>('/messages/unread-count', 'GET'),
+  markAsRead: (partnerId: string) => request<{ success: boolean }>(`/messages/mark-read/${partnerId}`, 'POST'),
 };
 
 export const api = {
@@ -445,5 +495,6 @@ export const api = {
   admin: adminApi,
   promotions: promotionsApi,
   viewings: viewingsApi,
+  messages: messagesApi,
 };
 

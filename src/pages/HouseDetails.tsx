@@ -27,6 +27,7 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import MessageButton from '@/components/MessageButton';
 import {
   Dialog,
   DialogContent,
@@ -325,6 +326,13 @@ const HouseDetails = () => {
                     )}
                   </button>
                   <p className="text-3xl font-bold text-primary">{formatPrice(house.price)}</p>
+                  {house.viewingFee && house.viewingFee > 0 && (
+                    <div className="mt-2 p-3 bg-accent/10 rounded-lg border border-accent/20 inline-block">
+                      <p className="text-sm font-medium text-accent-foreground">
+                        🎟️ Viewing Fee: <span className="text-primary font-bold">{formatPrice(house.viewingFee)}</span>
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-6 py-4 border-y border-border">
@@ -455,6 +463,18 @@ const HouseDetails = () => {
                           {agent?.role === 'landlord' ? 'Email Landlord' : 'Email Agent'}
                         </a>
                       </Button>
+                      {agent?.id && (
+                        <MessageButton
+                          receiverId={agent.id}
+                          receiverName={agent.name || 'Agent'}
+                          houseId={id}
+                          houseName={house.title}
+                          conversationType="tenant-agent"
+                          variant="secondary"
+                          className="w-full"
+                          size="lg"
+                        />
+                      )}
                       {agent?.id && (
                         <Link to={`/agent/${agent.id}`} className="block">
                           <Button variant="secondary" className="w-full" size="lg">
@@ -589,6 +609,17 @@ const HouseDetails = () => {
                                                     <Mail className="h-4 w-4" />
                                                   </a>
                                                 </Button>
+                                                <MessageButton
+                                                  receiverId={coTenant.id}
+                                                  receiverName={coTenant.name}
+                                                  houseId={id}
+                                                  houseName={house.title}
+                                                  conversationType="co-tenant"
+                                                  size="icon"
+                                                  className="h-9 w-9"
+                                                >
+                                                  <span className="sr-only">Message</span>
+                                                </MessageButton>
                                               </div>
                                             </div>
                                           </CardContent>

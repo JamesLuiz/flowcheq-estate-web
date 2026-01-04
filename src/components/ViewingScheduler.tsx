@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Clock, CalendarCheck, Loader2, User, Mail, Phone, X, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar, Clock, CalendarCheck, Loader2, User, Mail, Phone, X, CheckCircle, XCircle, Upload, FileText, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,6 +49,12 @@ interface ViewingSchedule {
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   notes?: string;
   createdAt: string;
+  viewingFee?: number;
+  paymentStatus?: string;
+  receiptUrl?: string;
+  amountPaid?: number;
+  platformFee?: number;
+  agentAmount?: number;
 }
 
 interface ViewingSchedulerProps {
@@ -283,6 +289,8 @@ export const ViewingManagement = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const receiptInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [uploadingReceiptId, setUploadingReceiptId] = useState<string | null>(null);
 
   const viewingsQuery = useQuery({
     queryKey: ['agent-viewings', user?.id],
@@ -308,6 +316,53 @@ export const ViewingManagement = () => {
       });
     },
   });
+
+  const uploadReceiptMutation = useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) => api.viewings.uploadReceipt(id, file),
+    onSuccess: () => {
+      toast({
+        title: 'Receipt uploaded',
+        description: 'Receipt has been uploaded successfully.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['agent-viewings'] });
+      setUploadingReceiptId(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Upload Failed',
+        description: error.message,
+      });
+      setUploadingReceiptId(null);
+    },
+  });
+
+  const handleReceiptSelect = (viewingId: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: 'destructive',
+        title: 'File too large',
+        description: 'Receipt file size must be less than 5MB',
+      });
+      return;
+    }
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid file type',
+        description: 'Please upload a JPG, PNG, or WEBP image',
+      });
+      return;
+    }
+
+    setUploadingReceiptId(viewingId);
+    uploadReceiptMutation.mutate({ id: viewingId, file });
+  };
 
   const viewings = (viewingsQuery.data as ViewingSchedule[]) || [];
   const pendingCount = viewings.filter(v => v.status === 'pending').length;
@@ -388,6 +443,35 @@ export const ViewingManagement = () => {
                           <strong>Notes:</strong> {viewing.notes}
                         </p>
                       )}
+                      {viewing.viewingFee && viewing.viewingFee > 0 && (
+                        <div className="p-2 bg-primary/10 rounded-md border border-primary/20">
+                          <p className="text-sm font-semibold text-primary">
+                            Viewing Fee: ₦{viewing.viewingFee.toLocaleString()}
+                          </p>
+                          {viewing.paymentStatus && (
+                            <Badge variant={viewing.paymentStatus === 'paid' ? 'default' : 'secondary'} className="mt-1">
+                              {viewing.paymentStatus}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                      {viewing.receiptUrl && (
+                        <div className="p-2 bg-muted rounded-md">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-primary" />
+                            <span className="text-sm font-medium">Receipt uploaded</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => window.open(viewing.receiptUrl, '_blank')}
+                              className="h-6 px-2"
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              View
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {viewing.status === 'pending' && (
@@ -424,6 +508,63 @@ export const ViewingManagement = () => {
                       </Button>
                     )}
                   </div>
+                  
+                  {/* Receipt Upload Section */}
+                  {viewing.viewingFee && viewing.viewingFee > 0 && (
+                    <div className="mt-4 pt-4 border-t">
+                      {viewing.receiptUrl ? (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-primary" />
+                            <span className="text-sm text-muted-foreground">Receipt uploaded</span>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.open(viewing.receiptUrl, '_blank')}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View Receipt
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Upload Payment Receipt</Label>
+                          <input
+                            ref={(el) => {
+                              receiptInputRefs.current[viewing.id] = el;
+                            }}
+                            type="file"
+                            accept="image/jpeg,image/jpg,image/png,image/webp"
+                            onChange={(e) => handleReceiptSelect(viewing.id, e)}
+                            className="hidden"
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => receiptInputRefs.current[viewing.id]?.click()}
+                            disabled={uploadingReceiptId === viewing.id}
+                            className="w-full"
+                          >
+                            {uploadingReceiptId === viewing.id ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Uploading...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-4 w-4 mr-2" />
+                                Upload Receipt
+                              </>
+                            )}
+                          </Button>
+                          <p className="text-xs text-muted-foreground">
+                            Upload proof of payment for the viewing fee (Max 5MB, JPG/PNG/WEBP)
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
