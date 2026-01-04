@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, CheckCircle, XCircle, Loader2, ArrowLeft, Eye, FileText, 
-  Image as ImageIcon, Megaphone, Users, TrendingUp, Ban, RefreshCw, CalendarCheck, Calendar, Mail, Phone, User, DollarSign, Percent, Settings, Image
+  Image as ImageIcon, Megaphone, Users, TrendingUp, Ban, RefreshCw, CalendarCheck, Calendar, Mail, Phone, User, DollarSign, Percent, Settings, Image, Home
 } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
