@@ -21,6 +21,8 @@ export const HouseCard = ({ house }: HouseCardProps) => {
   
   // Only users (not agents/landlords) can favorite properties
   const canFavorite = isAuthenticated && user?.role === 'user';
+  // Determine if current user is the owner/agent/landlord of this property
+  const isOwner = Boolean(user?.id && (user.id === house.agentId || user.id === house.agent?.id));
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -148,6 +150,20 @@ export const HouseCard = ({ house }: HouseCardProps) => {
               <MapPin className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
               <span className="line-clamp-1">{house.location}</span>
             </button>
+            
+            {/* Description Preview */}
+            {house.description && (
+              <div className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                <div 
+                  dangerouslySetInnerHTML={{
+                    __html: house.description
+                      .replace(/<[^>]*>/g, '') // Strip HTML tags
+                      .substring(0, 120) // Limit to 120 chars
+                      + (house.description.length > 120 ? '...' : '')
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -175,32 +191,33 @@ export const HouseCard = ({ house }: HouseCardProps) => {
             </Badge>
           </div>
           
-          {isAuthenticated ? (
+            {isAuthenticated ? (
             <>
-              <div className="w-full flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-muted-foreground">
-                    {house.agent?.name || 'Agent'}
-                  </p>
-                  <VerificationBadge verified={house.agent?.verified} size="sm" />
-                </div>
-                {house.agent && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      navigate(`/agents/${house.agentId}/catalogue`);
-                    }}
-                  >
-                    <Home className="h-3 w-3 mr-1" />
-                    View All
-                  </Button>
-                )}
-              </div>
+          <div className="w-full flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground">
+                {house.agent?.name || 'Agent'}
+              </p>
+              <VerificationBadge verified={house.agent?.verified} size="sm" />
+            </div>
+            {house.agent && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigate(`/agents/${house.agentId}/catalogue`);
+                }}
+              >
+                <Home className="h-3 w-3 mr-1" />
+                View All
+              </Button>
+            )}
+          </div>
 
+            {!isOwner && (
               <Button
                 onClick={handleWhatsAppClick}
                 size="sm"
@@ -212,6 +229,7 @@ export const HouseCard = ({ house }: HouseCardProps) => {
                 </svg>
                 {house.agent?.role === 'landlord' ? 'WhatsApp Landlord' : 'WhatsApp Agent'}
               </Button>
+            )}
             </>
           ) : (
             <div className="w-full p-3 bg-muted/50 rounded-lg border border-border">

@@ -60,6 +60,41 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Development Setup
+
+### Environment Configuration
+
+The frontend automatically uses `http://localhost:3000` as the API URL when running in development mode (`npm run dev`). This ensures you're always testing against your local backend server.
+
+**To override the API URL:**
+
+1. Create a `.env.local` file in the root directory (this file is gitignored)
+2. Add the following:
+   ```env
+   VITE_API_URL=http://localhost:3000
+   ```
+
+**For production builds:**
+- Set `VITE_API_URL` in your deployment platform's environment variables
+- If not set, it will default to `http://localhost:3000`
+
+### Running Locally
+
+1. **Start the backend server:**
+   ```sh
+   cd backend
+   npm install
+   npm run start:dev  # or your backend start command
+   ```
+
+2. **Start the frontend:**
+   ```sh
+   npm install
+   npm run dev
+   ```
+
+The frontend will automatically connect to `http://localhost:3000` when running in development mode.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/02f3ea16-b7f2-46f2-970b-c5be65bd3af4) and click on Share -> Publish.

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, CheckCircle, XCircle, Loader2, ArrowLeft, Eye, FileText, 
-  Image as ImageIcon, Megaphone, Users, TrendingUp, Ban, RefreshCw, CalendarCheck, Calendar, Mail, Phone, User, DollarSign, Percent, Settings, Image, Home
+  Image as ImageIcon, Megaphone, Users, TrendingUp, Ban, RefreshCw, CalendarCheck, Calendar, Mail, Phone, User, DollarSign, Percent, Settings, Image, Home, CreditCard
 } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,7 @@ import { format } from 'date-fns';
 import { UnverifiedAgentsManager } from '@/components/admin/UnverifiedAgentsManager';
 import { AgentsManager } from '@/components/admin/AgentsManager';
 import { PropertiesManager } from '@/components/admin/PropertiesManager';
+import { DisbursementsManager } from '@/components/admin/DisbursementsManager';
 import { Input } from '@/components/ui/input';
 
 interface Verification {
@@ -121,7 +122,7 @@ const Admin = () => {
   const queryClient = useQueryClient();
   
   // Main tab state
-  const [activeTab, setActiveTab] = useState<'verifications' | 'promotions' | 'viewings' | 'agents' | 'properties'>('verifications');
+  const [activeTab, setActiveTab] = useState<'verifications' | 'promotions' | 'viewings' | 'disbursements' | 'agents' | 'properties'>('verifications');
   const [platformFeeInput, setPlatformFeeInput] = useState<string>('');
   
   // Verification states
@@ -157,14 +158,16 @@ const Admin = () => {
   });
 
   // Platform fee percentage query
-  const platformFeeQuery = useQuery({
+  const platformFeeQuery = useQuery<{ platformFeePercentage: number }>({
     queryKey: ['platform-fee-percentage'],
     queryFn: () => api.admin.getPlatformFeePercentage(),
     enabled: isAuthenticated && user?.role === 'admin' && activeTab === 'viewings',
-    onSuccess: (data) => {
-      setPlatformFeeInput(String(data.platformFeePercentage || 10));
-    },
   });
+  
+  // Set platform fee input when data loads
+  if (platformFeeQuery.data && platformFeeInput === '') {
+    setPlatformFeeInput(String(platformFeeQuery.data.platformFeePercentage || 10));
+  }
 
   // Total agents query (for stats)
   const agentsQuery = useQuery({
@@ -177,6 +180,13 @@ const Admin = () => {
   const verifiedAgentsQuery = useQuery({
     queryKey: ['admin-verified-agents'],
     queryFn: () => api.agents.list({ verified: true }),
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+
+  // Admin aggregated stats (promotions + viewing platform fees)
+  const adminStatsQuery = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: () => api.admin.getStats(),
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
@@ -341,7 +351,7 @@ const Admin = () => {
   };
 
   // Stats calculations
-  const totalPromotionRevenue = promotions.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalPromotionRevenue = adminStatsQuery.data?.totalPromotionRevenue ?? promotions.reduce((sum, p) => sum + (p.amount || 0), 0);
   const activePromotions = promotions.filter(p => p.status === 'active').length;
   const pendingVerifications = verifications.filter(v => v.status === 'pending').length;
 
@@ -394,7 +404,13 @@ const Admin = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₦{totalPromotionRevenue.toLocaleString()}</div>
+              {adminStatsQuery.isLoading ? (
+                <div className="flex items-center justify-center py-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="text-2xl font-bold">₦{(adminStatsQuery.data?.totalPlatformRevenue ?? totalPromotionRevenue).toLocaleString()}</div>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -435,7 +451,7 @@ const Admin = () => {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5 max-w-4xl">
+          <TabsList className="grid w-full grid-cols-6 max-w-5xl">
             <TabsTrigger value="verifications" className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Verifications</span>
@@ -455,6 +471,11 @@ const Admin = () => {
                   {pendingViewings}
                 </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="disbursements" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              <span className="hidden sm:inline">Disbursements</span>
+              <span className="sm:hidden">Pay</span>
             </TabsTrigger>
             <TabsTrigger value="agents" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -932,6 +953,11 @@ const Admin = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Disbursements Tab */}
+          <TabsContent value="disbursements" className="space-y-4">
+            <DisbursementsManager />
           </TabsContent>
 
           {/* Agents Tab */}

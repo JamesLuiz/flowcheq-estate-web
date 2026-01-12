@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Heart, MapPin, History, BellRing, Loader2, BellOff, User } from 'lucide-react';
+import { Heart, MapPin, History, BellRing, Loader2, BellOff, User, CalendarCheck } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { HouseCard } from '@/components/HouseCard';
@@ -14,6 +14,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { UserViewingManagement } from '@/components/ViewingScheduler';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -81,18 +82,23 @@ const UserDashboard = () => {
         </div>
 
         <Tabs defaultValue="favorites" className="w-full">
-          <TabsList className="grid w-full md:w-auto grid-cols-3 md:inline-grid mb-8">
+          <TabsList className="grid w-full md:w-auto grid-cols-4 md:inline-grid mb-8">
             <TabsTrigger value="favorites" className="gap-2">
               <Heart className="h-4 w-4" />
-              Favorites ({favorites.length})
+              <span className="hidden sm:inline">Favorites ({favorites.length})</span>
+              <span className="sm:hidden">{favorites.length}</span>
+            </TabsTrigger>
+            <TabsTrigger value="viewings" className="gap-2">
+              <CalendarCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">Viewings</span>
             </TabsTrigger>
             <TabsTrigger value="alerts" className="gap-2">
               <BellRing className="h-4 w-4" />
-              Alerts
+              <span className="hidden sm:inline">Alerts</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-2">
               <History className="h-4 w-4" />
-              Search History
+              <span className="hidden sm:inline">History</span>
             </TabsTrigger>
           </TabsList>
 
@@ -128,6 +134,10 @@ const UserDashboard = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="viewings" className="space-y-6">
+            <UserViewingManagement />
           </TabsContent>
 
           <TabsContent value="alerts" className="space-y-6">

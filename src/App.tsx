@@ -25,6 +25,8 @@ import ContactUs from "./pages/ContactUs";
 import ProfileEdit from "./pages/ProfileEdit";
 import PromotionSetup from "./pages/PromotionSetup";
 import PromotionCallback from "./pages/PromotionCallback";
+import ViewingPaymentCallback from "./pages/ViewingPaymentCallback";
+import AgentWallet from "./pages/AgentWallet";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
 
@@ -50,6 +52,7 @@ const App = () => (
               <Route path="/messages" element={<Messages />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/wallet" element={<AgentWallet />} />
               <Route path="/user-dashboard" element={<UserDashboard />} />
               <Route path="/profile/edit" element={<ProfileEdit />} />
               <Route path="/compare" element={<PropertyComparison />} />
@@ -61,6 +64,7 @@ const App = () => (
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/promotions/setup" element={<PromotionSetup />} />
               <Route path="/promotions/callback" element={<PromotionCallback />} />
+              <Route path="/viewings/payment/callback" element={<ViewingPaymentCallback />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

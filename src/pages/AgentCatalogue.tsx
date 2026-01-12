@@ -226,39 +226,39 @@ const AgentCatalogue = () => {
         ) : (
           <>
             <div className="mb-8">
-              <div className="flex items-start gap-4 mb-6">
+              <div className="flex flex-col md:flex-row items-start gap-4 mb-6">
                 <img
                   src={
                     agent.avatarUrl ||
                     `https://api.dicebear.com/7.x/initials/svg?seed=${agent.name}`
                   }
                   alt={agent.name}
-                  className="w-20 h-20 rounded-full object-cover"
+                  className="w-20 h-20 rounded-full object-cover flex-shrink-0"
                 />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h1 className="text-3xl font-bold">{agent.name}'s Properties</h1>
+                <div className="flex-1 w-full">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+                    <h1 className="text-2xl sm:text-3xl font-bold">{agent.name}'s Properties</h1>
                     <VerificationBadge verified={agent.verified} size="lg" />
                   </div>
-                  <p className="text-muted-foreground mb-2">{agent.bio}</p>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <p className="text-muted-foreground mb-2 text-sm sm:text-base line-clamp-2">{agent.bio}</p>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <Home className="h-4 w-4" />
+                      <Home className="h-4 w-4 flex-shrink-0" />
                       {filteredListings.length} of {allListings.length} Properties
                     </span>
                     {agent.phone && (
                       <span className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
+                        <MapPin className="h-4 w-4 flex-shrink-0" />
                         Abuja, Nigeria
                       </span>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                   {/* Mobile Filter Sheet */}
                   <Sheet>
                     <SheetTrigger asChild>
-                      <Button variant="outline" className="md:hidden">
+                      <Button variant="outline" className="md:hidden w-full sm:w-auto">
                         <SlidersHorizontal className="h-4 w-4 mr-2" />
                         Filters
                       </Button>
@@ -276,16 +276,16 @@ const AgentCatalogue = () => {
                     </SheetContent>
                   </Sheet>
 
-                  <Link to={`/agents/${id}`}>
-                    <Button variant="outline">View Full Profile</Button>
+                  <Link to={`/agents/${id}`} className="w-full sm:w-auto">
+                    <Button variant="outline" className="w-full sm:w-auto">View Full Profile</Button>
                   </Link>
                 </div>
               </div>
 
               {/* Desktop Filters */}
               <Card className="hidden md:block">
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-5 gap-4">
+                <CardContent className="p-4 md:p-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
                     <div>
                       <Label className="text-xs mb-2 block">Min Price</Label>
                       <Input
@@ -293,6 +293,7 @@ const AgentCatalogue = () => {
                         placeholder="Min"
                         value={filters.minPrice}
                         onChange={(e) => setFilters((prev) => ({ ...prev, minPrice: e.target.value }))}
+                        className="text-sm"
                       />
                     </div>
                     <div>
@@ -302,6 +303,7 @@ const AgentCatalogue = () => {
                         placeholder="Max"
                         value={filters.maxPrice}
                         onChange={(e) => setFilters((prev) => ({ ...prev, maxPrice: e.target.value }))}
+                        className="text-sm"
                       />
                     </div>
                     <div>
@@ -310,7 +312,7 @@ const AgentCatalogue = () => {
                         value={filters.bedrooms}
                         onValueChange={(value) => setFilters((prev) => ({ ...prev, bedrooms: value }))}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="text-sm">
                           <SelectValue placeholder="Any" />
                         </SelectTrigger>
                         <SelectContent>
@@ -329,7 +331,7 @@ const AgentCatalogue = () => {
                         value={filters.type}
                         onValueChange={(value) => setFilters((prev) => ({ ...prev, type: value }))}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -348,7 +350,7 @@ const AgentCatalogue = () => {
                         value={filters.sortBy}
                         onValueChange={(value) => setFilters((prev) => ({ ...prev, sortBy: value }))}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

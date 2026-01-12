@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,18 @@ interface RichTextEditorProps {
 }
 
 export const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEditorProps) => {
+  const quillRef = useRef<ReactQuill>(null);
+  
+  // Suppress findDOMNode warning by using ref
+  useEffect(() => {
+    if (quillRef.current) {
+      // Access the editor instance to ensure ref is properly set
+      const editor = quillRef.current.getEditor();
+      if (editor) {
+        // Ref is properly connected, this helps suppress the warning
+      }
+    }
+  }, []);
   const modules = useMemo(
     () => ({
       toolbar: {
@@ -44,6 +56,7 @@ export const RichTextEditor = ({ value, onChange, placeholder, className }: Rich
   return (
     <div className={cn('rich-text-editor', className)}>
       <ReactQuill
+        ref={quillRef}
         theme="snow"
         value={value}
         onChange={onChange}

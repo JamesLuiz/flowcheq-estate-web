@@ -1,10 +1,39 @@
 import type { FilterParams, House, Agent } from '@/types';
 
+/**
+ * Get the API base URL for making requests
+ * 
+ * Development Mode Behavior:
+ * - When running `npm run dev`, automatically uses http://localhost:3000
+ * - This ensures local development always connects to local backend
+ * 
+ * To override (e.g., test against production):
+ * - Create .env.local file with: VITE_API_URL=https://your-api.com
+ * 
+ * Production:
+ * - Set VITE_API_URL in your deployment platform's environment variables
+ */
 const getApiBaseUrl = () => {
+  // In development mode, always use localhost unless explicitly overridden
+  const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
+  
+  // If in development and no explicit API URL is set, use localhost:3000
+  if (isDevelopment && !import.meta.env.VITE_API_URL) {
+    console.log('🔧 Development mode: Using http://localhost:3000 for API');
+    return 'http://localhost:3000';
+  }
+  
+  // Use environment variable if set
   const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl) {
-    return envUrl.replace(/\/$/, '');
+    const url = envUrl.replace(/\/$/, '');
+    if (isDevelopment) {
+      console.log(`🔧 Using custom API URL: ${url}`);
+    }
+    return url;
   }
+  
+  // Default fallback to localhost:3000
   return 'http://localhost:3000';
 };
 
@@ -67,6 +96,11 @@ async function request<T>(
   const url = buildUrl(path, params);
   const token = getAuthToken();
 
+  // Debug logging in development
+  if (import.meta.env.DEV) {
+    console.log(`[API] ${method} ${url}`, { body, skipAuth });
+  }
+
   const response = await fetch(url, {
     method,
     headers: {
@@ -80,18 +114,47 @@ async function request<T>(
 
   if (!response.ok) {
     let errorMessage = response.statusText;
+    let errorDetails: any = null;
     try {
       const errorBody = await response.json();
+      errorDetails = errorBody;
+      // Handle validation errors (NestJS ValidationPipe format)
+      if (Array.isArray(errorBody?.message)) {
+        errorMessage = errorBody.message.map((err: any) => {
+          if (typeof err === 'string') return err;
+          if (err?.constraints) {
+            return Object.values(err.constraints).join(', ');
+          }
+          return err?.property ? `${err.property}: ${Object.values(err.constraints || {}).join(', ')}` : String(err);
+        }).join('; ');
+      } else {
       errorMessage =
         errorBody?.message ??
         errorBody?.error ??
-        Array.isArray(errorBody?.message)
-          ? errorBody.message.join(', ')
-          : errorMessage;
+          errorMessage;
+      }
+      
+      // Debug logging in development
+      if (import.meta.env.DEV) {
+        console.error(`[API Error] ${method} ${url}`, {
+          status: response.status,
+          statusText: response.statusText,
+          errorDetails,
+          errorBody,
+          requestBody: body,
+        });
+        
+        // If it's a validation error, log the details
+        if (errorBody?.message && Array.isArray(errorBody.message)) {
+          console.error('Validation errors:', errorBody.message);
+        }
+      }
     } catch {
       // ignore
     }
-    throw new Error(errorMessage);
+    const error = new Error(errorMessage);
+    (error as any).details = errorDetails;
+    throw error;
   }
 
   if (response.status === 204) {
@@ -190,14 +253,25 @@ async function requestWithFiles<T>(
 
   if (!response.ok) {
     let errorMessage = response.statusText;
+    // Attempt to parse JSON; fallback to plain text for clearer errors
     try {
-      const errorBody = await response.json();
-      errorMessage =
-        errorBody?.message ??
-        errorBody?.error ??
-        Array.isArray(errorBody?.message)
-          ? errorBody.message.join(', ')
-          : errorMessage;
+      const rawText = await response.text();
+      try {
+        const errorBody = JSON.parse(rawText);
+        if (Array.isArray(errorBody?.message)) {
+          errorMessage = errorBody.message.join(', ');
+        } else if (typeof errorBody?.message === 'string') {
+          errorMessage = errorBody.message;
+        } else if (typeof errorBody?.error === 'string') {
+          errorMessage = errorBody.error;
+        } else if (rawText) {
+          errorMessage = rawText;
+        }
+      } catch {
+        if (rawText) {
+          errorMessage = rawText;
+        }
+      }
     } catch {
       // ignore
     }
@@ -285,15 +359,52 @@ const agentsApi = {
       body: {},
     });
   },
-  getBankAccount: () => request<{ bankAccount: { bankName: string; accountNumber: string; accountName: string; bankCode: string } | null; walletBalance: number }>('/agents/me/bank-account', 'GET'),
+  getBankAccount: () => request<{ 
+    bankAccount: { bankName: string; accountNumber: string; accountName: string; bankCode: string } | null; 
+    walletBalance: number;
+    virtualAccount?: {
+      accountNumber?: string;
+      accountName?: string;
+      bankName?: string;
+      bankCode?: string;
+      status?: string;
+    } | null;
+  }>('/agents/me/bank-account', 'GET'),
   updateBankAccount: (bankAccount: { bankName: string; accountNumber: string; accountName: string; bankCode: string }) =>
     request<Agent>('/agents/me/bank-account', 'PATCH', { body: { bankAccount } }),
-  withdrawFunds: (amount: number) =>
-    request<{ success: boolean; transferId: string; reference: string; status: string; amount: number; message: string }>(
+  withdraw: (amount: number, transactionPin: string, otp: string) => {
+    // Ensure amount is a number and transactionPin/otp are strings
+    const payload = {
+      amount: typeof amount === 'string' ? parseFloat(amount) : Number(amount),
+      transactionPin: String(transactionPin),
+      otp: String(otp).toUpperCase(),
+    };
+    
+    // Validate before sending
+    if (isNaN(payload.amount) || payload.amount <= 0) {
+      throw new Error('Invalid amount');
+    }
+    if (!payload.transactionPin || payload.transactionPin.length !== 6) {
+      throw new Error('Transaction PIN must be 6 digits');
+    }
+    if (!payload.otp || payload.otp.length !== 6) {
+      throw new Error('OTP must be 6 characters');
+    }
+    
+    return request<{ success: boolean; transferId: string; reference: string; status: string; amount: number; message: string }>(
       '/agents/me/withdraw',
       'POST',
-      { body: { amount } },
-    ),
+      { body: payload },
+    );
+  },
+  requestWithdrawalOtp: () => request<{ success: boolean; message: string; expiresAt: string }>('/agents/me/withdraw/request-otp', 'POST'),
+  getEarnings: () => request<{ earnings: any[]; stats: { totalEarnings: number; totalGross: number; totalPlatformFees: number; transactionCount: number } }>('/agents/me/earnings', 'GET'),
+  getWithdrawals: () => request<{ withdrawals: any[] }>('/agents/me/withdrawals', 'GET'),
+  setTransactionPin: (pin: string) => request<{ success: boolean; message: string }>('/agents/me/transaction-pin', 'POST', { body: { pin } }),
+  getTransactionPinStatus: () => request<{ hasPin: boolean }>('/agents/me/transaction-pin/status', 'GET'),
+  requestTransactionPinReset: () => request<{ success: boolean; message: string }>('/agents/me/transaction-pin/request-reset', 'POST'),
+  resetTransactionPin: (code: string, newPin: string) => request<{ success: boolean; message: string }>('/agents/me/transaction-pin/reset', 'POST', { body: { code, newPin } }),
+  fundWallet: (amount: number) => request<{ success: boolean; paymentLink: string; txRef: string }>('/agents/me/fund-wallet', 'POST', { body: { amount } }),
 };
 
 const reviewsApi = {
@@ -393,6 +504,14 @@ const adminApi = {
     request<{ success: boolean; platformFeePercentage: number; message: string }>('/admin/viewing-fees/platform-fee-percentage', 'PATCH', {
       body: { platformFeePercentage: percentage },
     }),
+  // Admin dashboard stats
+  getStats: () => request<{
+    totalAgents: number;
+    verifiedAgents: number;
+    totalPromotionRevenue: number;
+    totalViewingPlatformRevenue: number;
+    totalPlatformRevenue: number;
+  }>('/admin/stats', 'GET'),
   // Unverified agents
   getUnverifiedAgents: () => request<{ data: Agent[] }>('/admin/agents/unverified', 'GET'),
   sendBulkEmailToUnverifiedAgents: (message?: string) =>
@@ -439,6 +558,32 @@ const adminApi = {
     request<House>(`/admin/properties/${propertyId}/unflag`, 'PATCH'),
   deleteProperty: (propertyId: string) =>
     request<{ success: boolean; message: string }>(`/admin/properties/${propertyId}`, 'DELETE'),
+  // Disbursements
+  getPendingDisbursements: () => request<{
+    data: Array<{
+      agent: Agent;
+      pendingAmount: number;
+      totalEarnings: number;
+      recentEarnings: Array<{ id: string; amount: number; type: string; description: string; createdAt: string }>;
+      hasBankAccount: boolean;
+      bankAccount: { bankName: string; accountNumber: string; accountName: string } | null;
+      reason: string;
+    }>;
+    totalPending: number;
+    count: number;
+  }>('/admin/disbursements/pending', 'GET'),
+  processDisbursement: (agentId: string, amount: number, reason?: string) =>
+    request<{ success: boolean; message: string; withdrawalId: string; agent: Agent; amount: number }>(
+      `/admin/disbursements/process/${agentId}`,
+      'POST',
+      { body: { amount, reason } },
+    ),
+  processBulkDisbursements: (disbursements: { agentId: string; amount: number }[], reason?: string) =>
+    request<{ ok: boolean; message: string; successCount: number; failed: number; errors: string[] }>(
+      '/admin/disbursements/process-bulk',
+      'POST',
+      { body: { disbursements, reason } },
+    ),
 };
 
 const promotionsApi = {
@@ -493,11 +638,13 @@ const viewingsApi = {
     name?: string;
     email?: string;
     phone?: string;
+    userId?: string;
   }) => request<any>('/viewings/schedule', 'POST', { body: data }),
   getMyViewings: () => request<any[]>('/viewings/my', 'GET'),
+  getUserViewings: () => request<any[]>('/viewings/user', 'GET'),
   getAllViewings: () => request<any[]>('/viewings/admin/all', 'GET'),
-  updateStatus: (id: string, status: string) =>
-    request<any>(`/viewings/${id}/status`, 'PATCH', { body: { status } }),
+  updateStatus: (id: string, status: string, newDate?: string, newTime?: string) =>
+    request<any>(`/viewings/${id}/status`, 'PATCH', { body: { status, newDate, newTime } }),
   uploadReceipt: (id: string, file: File) => {
     const formData = new FormData();
     formData.append('receipt', file);
@@ -517,6 +664,10 @@ const viewingsApi = {
       return res.json();
     });
   },
+  initializePayment: (id: string) => 
+    request<{ success: boolean; paymentLink: string; transactionId: string }>(`/viewings/${id}/payment/initialize`, 'POST'),
+  verifyPayment: (txRef: string) =>
+    request<any>('/viewings/payment/verify', 'POST', { body: { tx_ref: txRef } }),
 };
 
 const messagesApi = {

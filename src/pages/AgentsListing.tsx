@@ -74,39 +74,39 @@ const AgentsListing = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {filteredAgents.map((agent) => (
               <Link key={agent.id} to={`/agents/${agent.id}`}>
                 <Card className="group hover:shadow-hover transition-all duration-300 hover:scale-[1.02] h-full">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
+                  <CardContent className="p-4 md:p-6">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-4">
                       <img
                         src={
                           agent.avatarUrl ||
                           `https://api.dicebear.com/7.x/initials/svg?seed=${agent.name}`
                         }
                         alt={agent.name}
-                        className="w-20 h-20 rounded-full object-cover"
+                        className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover flex-shrink-0"
                       />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
+                      <div className="flex-1 min-w-0 text-center sm:text-left">
+                        <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 flex-wrap">
+                          <h3 className="font-semibold text-base md:text-lg truncate group-hover:text-primary transition-colors">
                             {agent.name}
                           </h3>
                           <VerificationBadge verified={agent.verified} size="sm" />
                         </div>
-                        <Badge variant="secondary" className="mb-2 capitalize">
+                        <Badge variant="secondary" className="mb-2 capitalize text-xs">
                           {agent.role}
                         </Badge>
                         {agent.bio && (
-                          <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
+                          <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 mt-2">
                             {agent.bio}
                           </p>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-sm border-t pt-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm border-t pt-4">
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <Home className="h-4 w-4" />
                         <span>{agent.listings || 0} Properties</span>
@@ -114,7 +114,7 @@ const AgentsListing = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-primary group-hover:translate-x-1 transition-transform"
+                        className="text-primary group-hover:translate-x-1 transition-transform w-full sm:w-auto"
                       >
                         View Profile →
                       </Button>

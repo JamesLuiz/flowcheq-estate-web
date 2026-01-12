@@ -1,17 +1,18 @@
 import { FormEvent, useMemo, useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Home as HomeIcon, TrendingUp, Eye, Loader2, Edit, Trash2, User, ShieldAlert, CreditCard, Wallet, ArrowRight } from 'lucide-react';
+import { Plus, Home as HomeIcon, TrendingUp, Eye, Loader2, Edit, Trash2, User, ShieldAlert, CreditCard, Wallet, ArrowRight, Lock, EyeOff, AlertCircle, Check, ChevronsUpDown } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { HouseCard } from '@/components/HouseCard';
 import { VerificationDialog } from '@/components/VerificationDialog';
 import { ViewingManagement } from '@/components/ViewingScheduler';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -21,14 +22,16 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Check, ChevronsUpDown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
@@ -122,7 +125,19 @@ const Dashboard = () => {
     bankCode: '',
   });
   const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
+  const [isPinDialogOpen, setIsPinDialogOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawPin, setWithdrawPin] = useState('');
+  const [showWithdrawPin, setShowWithdrawPin] = useState(false);
+  const [showResetPin, setShowResetPin] = useState(false);
+  const [pinAttempts, setPinAttempts] = useState(3);
+  const [pendingWithdrawAmount, setPendingWithdrawAmount] = useState<number | null>(null);
+  const [isPinResetDialogOpen, setIsPinResetDialogOpen] = useState(false);
+  const [resetCode, setResetCode] = useState('');
+  const [newPinAfterReset, setNewPinAfterReset] = useState('');
+  const [confirmNewPin, setConfirmNewPin] = useState('');
+  const [showResetCode, setShowResetCode] = useState(false);
+  const [resetCodeSent, setResetCodeSent] = useState(false);
 
   const isAgent = user?.role === 'agent' || user?.role === 'landlord';
   const isVerified = user?.verified && user?.verificationStatus === 'approved';
@@ -139,6 +154,12 @@ const Dashboard = () => {
   const bankAccountQuery = useQuery({
     queryKey: ['bank-account', user?.id],
     queryFn: () => api.agents.getBankAccount(),
+    enabled: isAgent && Boolean(user?.id),
+  });
+
+  const pinStatusQuery = useQuery({
+    queryKey: ['transaction-pin-status'],
+    queryFn: () => api.agents.getTransactionPinStatus(),
     enabled: isAgent && Boolean(user?.id),
   });
 
@@ -162,23 +183,36 @@ const Dashboard = () => {
     },
   });
 
-  const withdrawFundsMutation = useMutation({
-    mutationFn: (amount: number) => api.agents.withdrawFunds(amount),
+  const requestPinResetMutation = useMutation({
+    mutationFn: () => api.agents.requestTransactionPinReset(),
     onSuccess: () => {
-      toast({
-        title: 'Withdrawal initiated',
-        description: 'Your withdrawal request has been submitted successfully. Funds will be transferred to your bank account.',
+      setResetCodeSent(true);
+      toast({ 
+        title: 'Reset code sent', 
+        description: 'A 6-digit code has been sent to your email. It expires in 15 minutes.' 
       });
-      setIsWithdrawDialogOpen(false);
-      setWithdrawAmount('');
-      bankAccountQuery.refetch();
     },
     onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Withdrawal failed',
-        description: error.message,
+      toast({ variant: 'destructive', title: 'Failed to send code', description: error.message });
+    },
+  });
+
+  const resetPinMutation = useMutation({
+    mutationFn: ({ code, newPin }: { code: string; newPin: string }) => api.agents.resetTransactionPin(code, newPin),
+    onSuccess: () => {
+      toast({ 
+        title: 'PIN reset successful', 
+        description: 'Your transaction PIN has been reset. You can now use it for withdrawals.' 
       });
+      pinStatusQuery.refetch();
+      setIsPinResetDialogOpen(false);
+      setResetCode('');
+      setNewPinAfterReset('');
+      setConfirmNewPin('');
+      setResetCodeSent(false);
+    },
+    onError: (error: Error) => {
+      toast({ variant: 'destructive', title: 'Reset failed', description: error.message });
     },
   });
 
@@ -195,10 +229,29 @@ const Dashboard = () => {
   }, [bankAccountQuery.data]);
 
   const createListingMutation = useMutation({
-    mutationFn: ({ coordinates, location }: { coordinates?: { lat: number; lng: number }; location: string }) =>
-      api.houses.create({
+    mutationFn: ({ coordinates, location }: { coordinates?: { lat: number; lng: number }; location: string }) => {
+      // Strip HTML tags and get plain text from RichTextEditor description
+      // Remove empty paragraphs and whitespace
+      const stripHtml = (html: string): string => {
+        if (!html) return '';
+        // Create a temporary div to parse HTML
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        let text = tmp.textContent || tmp.innerText || '';
+        // Clean up whitespace
+        text = text.trim().replace(/\s+/g, ' ');
+        return text;
+      };
+
+      const cleanDescription = stripHtml(formState.description);
+      
+      if (!cleanDescription) {
+        throw new Error('Description is required. Please enter a property description.');
+      }
+
+      return api.houses.create({
         title: formState.title,
-        description: formState.description,
+        description: cleanDescription,
         price: Number(formState.price),
         location,
         type: formState.type,
@@ -212,7 +265,8 @@ const Dashboard = () => {
         totalSlots: formState.isShared ? Number(formState.totalSlots) : undefined,
         viewingFee: formState.viewingFee ? Number(formState.viewingFee) : undefined,
         listingType: formState.listingType,
-      } as any),
+      } as any);
+    },
     onSuccess: (data) => {
       setIsDialogOpen(false);
       housesQuery.refetch();
@@ -240,10 +294,21 @@ const Dashboard = () => {
       setFormState(initialFormState);
     },
     onError: (error: Error) => {
+      console.error('Create listing error:', error);
+      const errorDetails = (error as any).details;
+      let errorMessage = error.message || 'An error occurred while creating the listing.';
+      
+      // Extract validation errors if present
+      if (errorDetails?.message && Array.isArray(errorDetails.message)) {
+        errorMessage = errorDetails.message.join(', ');
+      } else if (errorDetails?.message) {
+        errorMessage = errorDetails.message;
+      }
+      
       toast({
         variant: 'destructive',
-        title: 'Unable to create listing',
-        description: error.message,
+        title: 'Failed to create listing',
+        description: errorMessage,
       });
     },
   });
@@ -407,6 +472,28 @@ const Dashboard = () => {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    // Validate images before submission
+    if (formState.images.length < 3 || formState.images.length > 5) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid number of images',
+        description: 'Please select between 3 and 5 images.',
+      });
+      return;
+    }
+
+    // Validate each image size (max 5MB)
+    for (const image of formState.images) {
+      if (image.size > 5 * 1024 * 1024) {
+        toast({
+          variant: 'destructive',
+          title: 'Image too large',
+          description: `${image.name} is larger than 5MB. Please compress or select a smaller image.`,
+        });
+        return;
+      }
+    }
+
     // Build location string from address parts
     const locationParts: string[] = [];
     if (formState.streetAddress) locationParts.push(formState.streetAddress);
@@ -562,7 +649,7 @@ const Dashboard = () => {
         {/* Bank Settings */}
         <Card className="mb-8">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5" />
@@ -574,11 +661,11 @@ const Dashboard = () => {
               </div>
               <Dialog open={isBankSettingsOpen} onOpenChange={setIsBankSettingsOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline">
+                  <Button variant="outline" className="w-full sm:w-auto">
                     {bankAccountQuery.data?.bankAccount ? 'Update Account' : 'Add Bank Account'}
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Bank Account Details</DialogTitle>
                   </DialogHeader>
@@ -611,10 +698,10 @@ const Dashboard = () => {
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-full p-0" align="start">
+                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                           <Command>
                             <CommandInput placeholder="Search bank..." />
-                            <CommandList>
+                            <CommandList className="max-h-[200px] sm:max-h-[300px]">
                               <CommandEmpty>No bank found.</CommandEmpty>
                               <CommandGroup>
                                 {NIGERIAN_BANKS.map((bank) => (
@@ -692,16 +779,17 @@ const Dashboard = () => {
                       </div>
                     )}
 
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => setIsBankSettingsOpen(false)}
                         disabled={updateBankAccountMutation.isPending}
+                        className="w-full sm:w-auto"
                       >
                         Cancel
                       </Button>
-                      <Button type="submit" disabled={updateBankAccountMutation.isPending}>
+                      <Button type="submit" disabled={updateBankAccountMutation.isPending} className="w-full sm:w-auto">
                         {updateBankAccountMutation.isPending ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -724,21 +812,26 @@ const Dashboard = () => {
               </div>
             ) : bankAccountQuery.data?.bankAccount ? (
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <p className="font-semibold">{bankAccountQuery.data.bankAccount.bankName}</p>
-                    <p className="text-sm text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate">{bankAccountQuery.data.bankAccount.bankName}</p>
+                    <p className="text-sm text-muted-foreground break-all">
                       {bankAccountQuery.data.bankAccount.accountNumber}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground truncate">
                       {bankAccountQuery.data.bankAccount.accountName}
                     </p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setIsBankSettingsOpen(true)}>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setIsBankSettingsOpen(true)}
+                    className="w-full sm:w-auto shrink-0"
+                  >
                     Edit
                   </Button>
                 </div>
-                {bankAccountQuery.data.walletBalance !== undefined && bankAccountQuery.data.walletBalance > 0 && (
+                {bankAccountQuery.data.walletBalance !== undefined && (
                   <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
                     <div className="flex items-center gap-2 mb-1">
                       <Wallet className="h-4 w-4 text-primary" />
@@ -747,86 +840,27 @@ const Dashboard = () => {
                     <p className="text-xl font-bold text-primary">
                       ₦{bankAccountQuery.data.walletBalance.toLocaleString()}
                     </p>
-                    <Dialog open={isWithdrawDialogOpen} onOpenChange={setIsWithdrawDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button className="w-full mt-3" size="sm">
-                          <ArrowRight className="h-4 w-4 mr-2" />
-                          Withdraw Funds
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Withdraw Funds</DialogTitle>
-                        </DialogHeader>
-                        <form
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            const amount = parseFloat(withdrawAmount);
-                            if (isNaN(amount) || amount < 100) {
-                              toast({
-                                variant: 'destructive',
-                                title: 'Invalid amount',
-                                description: 'Minimum withdrawal amount is ₦100',
-                              });
-                              return;
-                            }
-                            if (amount > (bankAccountQuery.data?.walletBalance || 0)) {
-                              toast({
-                                variant: 'destructive',
-                                title: 'Insufficient balance',
-                                description: 'You do not have enough balance for this withdrawal',
-                              });
-                              return;
-                            }
-                            withdrawFundsMutation.mutate(amount);
-                          }}
-                          className="space-y-4"
+                    <div className="flex gap-2 mt-3">
+                      <Button 
+                        variant="outline"
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => navigate('/wallet')}
+                      >
+                        <Wallet className="h-4 w-4 mr-2" />
+                        View Wallet
+                      </Button>
+                      {bankAccountQuery.data.walletBalance > 0 && (
+                        <Button 
+                          className="flex-1" 
+                          size="sm"
+                          onClick={() => navigate('/wallet')}
                         >
-                          <div className="space-y-2">
-                            <Label htmlFor="withdrawAmount">Amount (₦)</Label>
-                            <Input
-                              id="withdrawAmount"
-                              type="number"
-                              placeholder="Enter amount to withdraw"
-                              value={withdrawAmount}
-                              onChange={(e) => setWithdrawAmount(e.target.value)}
-                              min={100}
-                              max={bankAccountQuery.data?.walletBalance || 0}
-                              required
-                            />
-                            <p className="text-xs text-muted-foreground">
-                              Available: ₦{bankAccountQuery.data?.walletBalance?.toLocaleString() || '0'}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Minimum withdrawal: ₦100
-                            </p>
-                          </div>
-                          <div className="flex gap-2 justify-end">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => setIsWithdrawDialogOpen(false)}
-                              disabled={withdrawFundsMutation.isPending}
-                            >
-                              Cancel
-                            </Button>
-                            <Button type="submit" disabled={withdrawFundsMutation.isPending}>
-                              {withdrawFundsMutation.isPending ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Processing...
-                                </>
-                              ) : (
-                                <>
-                                  <ArrowRight className="mr-2 h-4 w-4" />
-                                  Withdraw
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
+                          <ArrowRight className="h-4 w-4 mr-2" />
+                          Withdraw
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -839,6 +873,45 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Virtual Account Info */}
+        {bankAccountQuery.data?.virtualAccount && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Virtual Account
+              </CardTitle>
+              <CardDescription>
+                Your Flutterwave virtual account for receiving payments
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium">Account Number</p>
+                    <Badge variant={bankAccountQuery.data.virtualAccount.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                      {bankAccountQuery.data.virtualAccount.status || 'ACTIVE'}
+                    </Badge>
+                  </div>
+                  <p className="text-2xl font-bold font-mono">
+                    {bankAccountQuery.data.virtualAccount.accountNumber}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {bankAccountQuery.data.virtualAccount.bankName}
+                  </p>
+                </div>
+                <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    <strong>How it works:</strong> Payments from viewing fees are automatically deposited into this virtual account. 
+                    You can withdraw funds from your wallet balance to your bank account anytime.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="mb-6">
           {!isVerified ? (
@@ -1096,14 +1169,40 @@ const Dashboard = () => {
                     multiple
                     onChange={(event) => {
                       const files = Array.from(event.target.files || []);
+                      
+                      // Validate number of files
                       if (files.length < 3 || files.length > 5) {
                         toast({
                           variant: 'destructive',
                           title: 'Invalid number of images',
                           description: 'Please select between 3 and 5 images.',
                         });
+                        // Clear the input
+                        event.target.value = '';
+                        setFormState((prev) => ({ ...prev, images: [] }));
                         return;
                       }
+
+                      // Validate file sizes
+                      const invalidFiles: string[] = [];
+                      for (const file of files) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          invalidFiles.push(file.name);
+                        }
+                      }
+
+                      if (invalidFiles.length > 0) {
+                        toast({
+                          variant: 'destructive',
+                          title: 'Image too large',
+                          description: `${invalidFiles.join(', ')} ${invalidFiles.length === 1 ? 'is' : 'are'} larger than 5MB. Please select smaller images.`,
+                        });
+                        // Clear the input
+                        event.target.value = '';
+                        setFormState((prev) => ({ ...prev, images: [] }));
+                        return;
+                      }
+
                       setFormState((prev) => ({ ...prev, images: files }));
                     }}
                   />
@@ -1111,8 +1210,18 @@ const Dashboard = () => {
                     Upload 3-5 images of your property (JPG, PNG, or WebP, max 5MB each).
                   </p>
                   {formState.images.length > 0 && (
-                    <div className="mt-2 text-sm text-muted-foreground">
+                    <div className="mt-2 space-y-1">
+                      <div className="text-sm text-muted-foreground">
                       {formState.images.length} image(s) selected
+                      </div>
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        {formState.images.map((img, idx) => (
+                          <div key={idx} className="flex items-center justify-between">
+                            <span className="truncate max-w-[200px]">{img.name}</span>
+                            <span className="text-xs">{(img.size / 1024 / 1024).toFixed(2)} MB</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1442,6 +1551,24 @@ const Dashboard = () => {
                   </div>
                 </div>
 
+                {/* Viewing Fee (editable in edit dialog) */}
+                <div className="space-y-2 p-4 border rounded-lg bg-muted/50">
+                  <Label htmlFor="edit-viewingFee">Viewing/Tour Fee (₦)</Label>
+                  <Input
+                    id="edit-viewingFee"
+                    type="number"
+                    min="0"
+                    placeholder="e.g., 5000 (leave empty for free viewing)"
+                    value={formState.viewingFee}
+                    onChange={(event) =>
+                      setFormState((prev) => ({ ...prev, viewingFee: event.target.value }))
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Set a viewing fee that users must pay to schedule a property tour. Leave empty for free viewings.
+                  </p>
+                </div>
+
                 <div className="flex items-center gap-2">
                   <input
                     id="edit-featured"
@@ -1481,7 +1608,12 @@ const Dashboard = () => {
         </div>
 
         <div>
-          <h2 className="text-2xl font-bold mb-6">Your Listings</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">Your Listings</h2>
+            <Badge variant="secondary" className="text-sm">
+              {houses.length} {houses.length === 1 ? 'property' : 'properties'}
+            </Badge>
+          </div>
           {housesQuery.isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -1524,6 +1656,162 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+
+      {/* PIN Reset Dialog */}
+      <Dialog open={isPinResetDialogOpen} onOpenChange={setIsPinResetDialogOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg mx-4">
+          <DialogHeader>
+            <DialogTitle>Reset Transaction PIN</DialogTitle>
+            <DialogDescription>
+              Request a reset code via email, then enter it along with your new PIN
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2 sm:py-4">
+            {!resetCodeSent ? (
+              <div className="space-y-4">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    A 6-digit reset code will be sent to your email. The code expires in 15 minutes.
+                  </AlertDescription>
+                </Alert>
+                <Button
+                  onClick={() => requestPinResetMutation.mutate()}
+                  disabled={requestPinResetMutation.isPending}
+                  className="w-full"
+                >
+                  {requestPinResetMutation.isPending ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>
+                  ) : (
+                    <>Send Reset Code to Email</>
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm">Reset Code</Label>
+                  <div className="relative">
+                    <Input
+                      type={showResetCode ? 'text' : 'password'}
+                      placeholder="Enter 6-digit reset code"
+                      value={resetCode}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                        setResetCode(value);
+                      }}
+                      maxLength={6}
+                      className="pr-10 text-base"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-2 sm:px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowResetCode(!showResetCode)}
+                    >
+                      {showResetCode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm">New Transaction PIN (6 digits)</Label>
+                  <div className="relative">
+                    <Input
+                      type={showResetPin ? 'text' : 'password'}
+                      placeholder="Enter new 6-digit PIN"
+                      value={newPinAfterReset}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                        setNewPinAfterReset(value);
+                      }}
+                      maxLength={6}
+                      className="pr-10 text-base"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-2 sm:px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowResetPin(!showResetPin)}
+                    >
+                      {showResetPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm">Confirm New PIN</Label>
+                  <Input
+                    type={showResetPin ? 'text' : 'password'}
+                    placeholder="Confirm new 6-digit PIN"
+                    value={confirmNewPin}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      setConfirmNewPin(value);
+                    }}
+                    maxLength={6}
+                    className="text-base"
+                  />
+                </div>
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-xs"
+                  onClick={() => {
+                    setResetCode('');
+                    setNewPinAfterReset('');
+                    setConfirmNewPin('');
+                    setResetCodeSent(false);
+                  }}
+                >
+                  Request new code
+                </Button>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsPinResetDialogOpen(false);
+                setResetCode('');
+                setNewPinAfterReset('');
+                setConfirmNewPin('');
+                setResetCodeSent(false);
+              }}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            {resetCodeSent && (
+              <Button 
+                onClick={() => {
+                  if (!resetCode || resetCode.length !== 6) {
+                    toast({ variant: 'destructive', title: 'Invalid code', description: 'Please enter the 6-digit reset code' });
+                    return;
+                  }
+                  if (!newPinAfterReset || newPinAfterReset.length !== 6 || !/^\d{6}$/.test(newPinAfterReset)) {
+                    toast({ variant: 'destructive', title: 'Invalid PIN', description: 'PIN must be exactly 6 digits' });
+                    return;
+                  }
+                  if (newPinAfterReset !== confirmNewPin) {
+                    toast({ variant: 'destructive', title: 'PIN mismatch', description: 'PINs do not match' });
+                    return;
+                  }
+                  resetPinMutation.mutate({ code: resetCode, newPin: newPinAfterReset });
+                }}
+                disabled={resetPinMutation.isPending || resetCode.length !== 6 || newPinAfterReset.length !== 6 || confirmNewPin.length !== 6}
+                className="w-full sm:w-auto"
+              >
+                {resetPinMutation.isPending ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Resetting...</>
+                ) : (
+                  <>Reset PIN</>
+                )}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -1,7 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
-import { 
-  ChevronLeft, ChevronRight, Maximize2, Minimize2, Play, Pause, 
-  RotateCcw, Camera, Grid3X3, X, Move3D
+import {
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
+  Play,
+  Pause,
+  RotateCcw,
+  Camera,
+  Grid3X3,
+  X,
+  Move3D,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +36,7 @@ export const VirtualTour = ({ images, propertyTitle }: VirtualTourProps) => {
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -112,7 +122,7 @@ export const VirtualTour = ({ images, propertyTitle }: VirtualTourProps) => {
     return null;
   }
 
-  const TourContent = ({ inDialog = false }: { inDialog?: boolean }) => (
+  const TourContent = ({ inDialog = false, closeTour }: { inDialog?: boolean; closeTour?: () => void }) => (
     <div
       ref={!inDialog ? containerRef : undefined}
       className={cn(
@@ -137,9 +147,13 @@ export const VirtualTour = ({ images, propertyTitle }: VirtualTourProps) => {
             'w-full h-full object-cover transition-transform duration-300',
             isZoomed && 'scale-150'
           )}
-          style={isZoomed ? {
-            transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`
-          } : undefined}
+          style={
+            isZoomed
+              ? {
+                  transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                }
+              : undefined
+          }
           draggable={false}
         />
 
@@ -182,9 +196,7 @@ export const VirtualTour = ({ images, propertyTitle }: VirtualTourProps) => {
           variant="ghost"
           className="absolute top-4 right-4 z-20 h-10 w-10 bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white rounded-full"
           onClick={() => {
-            // Find and close the parent dialog
-            const closeButton = document.querySelector('[data-radix-collection-item]')?.closest('[role="dialog"]')?.querySelector('[aria-label="Close"]') as HTMLButtonElement;
-            closeButton?.click();
+            if (closeTour) closeTour();
           }}
         >
           <X className="h-5 w-5" />
@@ -257,16 +269,10 @@ export const VirtualTour = ({ images, propertyTitle }: VirtualTourProps) => {
                 onClick={() => goToImage(index)}
                 className={cn(
                   'relative flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden transition-all duration-200',
-                  currentIndex === index
-                    ? 'ring-2 ring-white scale-110 z-10'
-                    : 'opacity-60 hover:opacity-100'
+                  currentIndex === index ? 'ring-2 ring-white scale-110 z-10' : 'opacity-60 hover:opacity-100'
                 )}
               >
-                <img
-                  src={image}
-                  alt={`Thumbnail ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
+                <img src={image} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
               </button>
             ))}
           </div>
@@ -279,12 +285,7 @@ export const VirtualTour = ({ images, propertyTitle }: VirtualTourProps) => {
               <button
                 key={index}
                 onClick={() => goToImage(index)}
-                className={cn(
-                  'flex-1 h-1 rounded-full transition-all duration-300',
-                  currentIndex === index
-                    ? 'bg-white'
-                    : 'bg-white/30 hover:bg-white/50'
-                )}
+                className={cn('flex-1 h-1 rounded-full transition-all duration-300', currentIndex === index ? 'bg-white' : 'bg-white/30 hover:bg-white/50')}
               />
             ))}
           </div>
@@ -308,8 +309,8 @@ export const VirtualTour = ({ images, propertyTitle }: VirtualTourProps) => {
       {/* Inline Tour */}
       <TourContent />
 
-      {/* Fullscreen Dialog Option */}
-      <Dialog>
+      {/* Fullscreen Controlled Dialog */}
+      <Dialog open={tourOpen} onOpenChange={setTourOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" className="w-full">
             <Maximize2 className="mr-2 h-4 w-4" />
@@ -322,17 +323,9 @@ export const VirtualTour = ({ images, propertyTitle }: VirtualTourProps) => {
               {propertyTitle} - Virtual Tour
             </DialogTitle>
           </DialogHeader>
-          <TourContent inDialog />
+          <TourContent inDialog closeTour={() => setTourOpen(false)} />
           {/* Explicit Close Button */}
-          <Button
-            size="sm"
-            variant="secondary"
-            className="absolute bottom-4 right-4 z-20"
-            onClick={() => {
-              const closeBtn = document.querySelector('[data-state="open"] button[aria-label="Close"]') as HTMLButtonElement;
-              closeBtn?.click();
-            }}
-          >
+          <Button size="sm" variant="secondary" className="absolute bottom-4 right-4 z-20" onClick={() => setTourOpen(false)}>
             <X className="h-4 w-4 mr-2" />
             Close Tour
           </Button>
@@ -347,9 +340,7 @@ export const VirtualTour = ({ images, propertyTitle }: VirtualTourProps) => {
         <span className="flex items-center gap-1">
           <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Space</kbd> Auto-tour
         </span>
-        <span className="flex items-center gap-1">
-          Click to zoom & pan
-        </span>
+        <span className="flex items-center gap-1">Click to zoom &amp; pan</span>
       </div>
     </div>
   );

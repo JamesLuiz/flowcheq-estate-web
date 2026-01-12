@@ -30,6 +30,9 @@ interface Conversation {
   conversationType: 'tenant-agent' | 'co-tenant';
 }
 
+// Pusher uses WebSockets but it's a managed service that works with Vercel
+// The client connects to Pusher's servers (not our server), so it's compatible with serverless
+// If Pusher is not configured, we fall back to polling
 const PUSHER_KEY = import.meta.env.VITE_PUSHER_KEY;
 const PUSHER_CLUSTER = import.meta.env.VITE_PUSHER_CLUSTER || 'eu';
 const POLLING_INTERVAL = 10000; // 10 seconds fallback polling
@@ -130,7 +133,7 @@ export const useMessaging = () => {
         pusher.disconnect();
       };
     } else {
-      // Fallback to polling
+      // Fallback to polling (less frequent to reduce server load)
       console.log('Pusher not configured, using polling');
       
       const poll = () => {
@@ -139,7 +142,8 @@ export const useMessaging = () => {
       };
 
       poll(); // Initial fetch
-      pollingRef.current = setInterval(poll, POLLING_INTERVAL);
+      // Use longer interval to reduce server load
+      pollingRef.current = setInterval(poll, POLLING_INTERVAL * 2); // 20 seconds instead of 10
 
       return () => {
         if (pollingRef.current) {

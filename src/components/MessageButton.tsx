@@ -83,6 +83,15 @@ const MessageButton = ({
       navigate('/auth');
       return;
     }
+    // Prevent opening message dialog when trying to message yourself
+    if (user?.id === receiverId) {
+      toast({
+        variant: 'destructive',
+        title: 'Cannot message yourself',
+        description: 'You cannot send messages to your own account',
+      });
+      return;
+    }
     setOpen(true);
   };
 
