@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Home, Flag, Trash2, Eye, Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Home, Flag, Trash2, Eye, Loader2, AlertTriangle, CheckCircle, FileText, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -171,6 +171,7 @@ export const PropertiesManager = () => {
                     <TableHead>Price</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Address Verification</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>

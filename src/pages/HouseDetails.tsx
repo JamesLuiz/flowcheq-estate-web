@@ -367,6 +367,70 @@ const HouseDetails = () => {
                   />
                 </div>
 
+                {/* Tagged Photos by Room Type */}
+                {house.taggedPhotos && house.taggedPhotos.length > 0 && (
+                  <div className="mt-6">
+                    <h2 className="text-xl font-semibold mb-4">Property Photos by Room</h2>
+                    <div className="space-y-6">
+                      {(() => {
+                        // Group tagged photos by tag
+                        const grouped = house.taggedPhotos.reduce((acc, photo) => {
+                          const tag = photo.tag || 'other';
+                          if (!acc[tag]) {
+                            acc[tag] = [];
+                          }
+                          acc[tag].push(photo);
+                          return acc;
+                        }, {} as Record<string, typeof house.taggedPhotos>);
+
+                        // Tag display names
+                        const tagNames: Record<string, string> = {
+                          'bathroom': 'Bathroom',
+                          'bedroom': 'Bedroom',
+                          'kitchen': 'Kitchen',
+                          'sitting-room': 'Sitting Room',
+                          'lobby': 'Lobby',
+                          'toilet': 'Toilet',
+                          'full-photo': 'Full Photo of House',
+                          'exterior': 'Exterior',
+                          'balcony': 'Balcony',
+                          'other': 'Other',
+                        };
+
+                        return Object.entries(grouped).map(([tag, photos]) => (
+                          <div key={tag} className="space-y-3">
+                            <h3 className="text-lg font-semibold capitalize">
+                              {tagNames[tag] || tag.replace('-', ' ')}
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {photos?.map((photo, idx) => (
+                                <div key={idx} className="space-y-2">
+                                  <div className="relative aspect-video rounded-lg overflow-hidden">
+                                    <img
+                                      src={photo.url}
+                                      alt={`${tagNames[tag] || tag} ${idx + 1}`}
+                                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer"
+                                      onClick={() => {
+                                        // Open in lightbox or full view
+                                        window.open(photo.url, '_blank');
+                                      }}
+                                    />
+                                  </div>
+                                  {photo.description && (
+                                    <p className="text-sm text-muted-foreground">
+                                      {photo.description}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  </div>
+                )}
+
                 {/* Virtual Tour */}
                 {images.length > 1 && (
                   <div className="mt-6">

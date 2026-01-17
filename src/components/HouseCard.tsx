@@ -2,7 +2,7 @@ import { House } from '@/types';
 import { Card, CardContent, CardFooter } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Bed, Bath, Maximize, MapPin, Heart, Eye, Home } from 'lucide-react';
+import { Bed, Bath, Maximize, MapPin, Heart, Eye, Home, CheckCircle2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/context/AuthContext';
@@ -117,9 +117,20 @@ export const HouseCard = ({ house }: HouseCardProps) => {
                 🤝 Shared
               </Badge>
             )}
+            {house.isAirbnb && (
+              <Badge className="bg-purple-600 text-white">
+                🏨 Airbnb
+              </Badge>
+            )}
             {house.listingType && (
               <Badge className={house.listingType === 'rent' ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'}>
                 {house.listingType === 'rent' ? 'For Rent' : 'For Sale'}
+              </Badge>
+            )}
+            {house.addressVerified && (
+              <Badge className="bg-green-600 text-white flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                Verified Address
               </Badge>
             )}
           </div>

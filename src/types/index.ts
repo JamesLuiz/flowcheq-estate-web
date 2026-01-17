@@ -46,6 +46,18 @@ export interface House {
   viewingFee?: number;
   // Listing type
   listingType?: 'rent' | 'buy';
+  // Airbnb listing
+  isAirbnb?: boolean;
+  // Proof of address
+  proofOfAddress?: string;
+  // Address verification status
+  addressVerified?: boolean;
+  // Tagged photos with room types
+  taggedPhotos?: Array<{
+    url: string;
+    tag: string;
+    description?: string;
+  }>;
 }
 
 export interface FilterParams {

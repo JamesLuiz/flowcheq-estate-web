@@ -202,19 +202,38 @@ const authApi = {
 async function requestWithFiles<T>(
   path: string,
   method: HttpMethod,
-  options: RequestOptions & { files?: File[] } = {},
+  options: RequestOptions & { files?: File[]; proofOfAddressFile?: File; taggedPhotos?: File[]; taggedPhotoTags?: string[]; taggedPhotoDescriptions?: string[] } = {},
 ): Promise<T> {
-  const { params, skipAuth, headers, body, files, ...rest } = options;
+  const { params, skipAuth, headers, body, files, proofOfAddressFile, taggedPhotos, taggedPhotoTags, taggedPhotoDescriptions, ...rest } = options;
   const url = buildUrl(path, params);
   const token = getAuthToken();
 
   const formData = new FormData();
 
-  // Add files if provided
+  // Add image files if provided
   if (files && files.length > 0) {
     files.forEach((file) => {
       formData.append('images', file);
     });
+  }
+
+  // Add proof of address file if provided
+  if (proofOfAddressFile) {
+    formData.append('proofOfAddress', proofOfAddressFile);
+  }
+
+  // Add tagged photos if provided
+  if (taggedPhotos && taggedPhotos.length > 0) {
+    taggedPhotos.forEach((file) => {
+      formData.append('taggedPhotos', file);
+    });
+    // Add tags and descriptions as JSON arrays
+    if (taggedPhotoTags) {
+      formData.append('taggedPhotoTags', JSON.stringify(taggedPhotoTags));
+    }
+    if (taggedPhotoDescriptions) {
+      formData.append('taggedPhotoDescriptions', JSON.stringify(taggedPhotoDescriptions));
+    }
   }
 
   // Add other form fields
@@ -310,14 +329,28 @@ const housesApi = {
     );
   },
   get: (id: string) => request<House>(`/houses/${id}`, 'GET'),
-  create: (payload: Omit<Partial<House>, 'images'> & { images?: File[] | string[] }) => {
-    const { images, ...restPayload } = payload;
+  create: (payload: Omit<Partial<House>, 'images'> & { 
+    images?: File[] | string[]; 
+    proofOfAddress?: File | null;
+    taggedPhotos?: Array<{ file: File; tag: string; description: string }>;
+  }) => {
+    const { images, proofOfAddress, taggedPhotos, ...restPayload } = payload;
     const files = images as File[] | undefined;
+    const proofFile = proofOfAddress as File | undefined;
+    
+    // Extract tagged photo files, tags, and descriptions
+    const taggedPhotoFiles = taggedPhotos?.map(p => p.file);
+    const taggedPhotoTags = taggedPhotos?.map(p => p.tag);
+    const taggedPhotoDescriptions = taggedPhotos?.map(p => p.description);
     
     if (files && files.length > 0) {
       return requestWithFiles<House>('/houses', 'POST', {
         body: restPayload,
         files,
+        proofOfAddressFile: proofFile,
+        taggedPhotos: taggedPhotoFiles,
+        taggedPhotoTags,
+        taggedPhotoDescriptions,
       });
     }
     return request<House>('/houses', 'POST', { body: payload });
@@ -558,6 +591,8 @@ const adminApi = {
     request<House>(`/admin/properties/${propertyId}/unflag`, 'PATCH'),
   deleteProperty: (propertyId: string) =>
     request<{ success: boolean; message: string }>(`/admin/properties/${propertyId}`, 'DELETE'),
+  verifyPropertyAddress: (propertyId: string) =>
+    request<House>(`/admin/properties/${propertyId}/verify-address`, 'PATCH'),
   // Disbursements
   getPendingDisbursements: () => request<{
     data: Array<{

@@ -103,6 +103,12 @@ const initialFormState = {
   viewingFee: '',
   // Listing type
   listingType: 'buy' as 'rent' | 'buy',
+  // Airbnb listing
+  isAirbnb: false,
+  // Proof of address
+  proofOfAddress: null as File | null,
+  // Tagged photos
+  taggedPhotos: [] as Array<{ file: File; tag: string; description: string }>,
 };
 
 const Dashboard = () => {
@@ -265,6 +271,9 @@ const Dashboard = () => {
         totalSlots: formState.isShared ? Number(formState.totalSlots) : undefined,
         viewingFee: formState.viewingFee ? Number(formState.viewingFee) : undefined,
         listingType: formState.listingType,
+        isAirbnb: formState.isAirbnb,
+        proofOfAddress: formState.proofOfAddress || undefined,
+        taggedPhotos: formState.taggedPhotos.length > 0 ? formState.taggedPhotos : undefined,
       } as any);
     },
     onSuccess: (data) => {
@@ -1226,6 +1235,117 @@ const Dashboard = () => {
                   )}
                 </div>
 
+                {/* Tagged Photos Section */}
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                  <div>
+                    <Label>Tagged Photos (Optional - Up to 8 photos)</Label>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Upload photos with room tags (bathroom, bedroom, kitchen, sitting room, lobby, toilet, full photo, etc.) and descriptions.
+                    </p>
+                  </div>
+                  
+                  {formState.taggedPhotos.map((photo, index) => (
+                    <div key={index} className="p-3 border rounded-lg space-y-2 bg-background">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Photo {index + 1}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setFormState((prev) => ({
+                              ...prev,
+                              taggedPhotos: prev.taggedPhotos.filter((_, i) => i !== index),
+                            }));
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {photo.file.name} ({(photo.file.size / 1024 / 1024).toFixed(2)} MB)
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`tag-${index}`} className="text-xs">Room Tag</Label>
+                        <Select
+                          value={photo.tag}
+                          onValueChange={(value) => {
+                            setFormState((prev) => ({
+                              ...prev,
+                              taggedPhotos: prev.taggedPhotos.map((p, i) =>
+                                i === index ? { ...p, tag: value } : p
+                              ),
+                            }));
+                          }}
+                        >
+                          <SelectTrigger id={`tag-${index}`}>
+                            <SelectValue placeholder="Select room type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="bathroom">Bathroom</SelectItem>
+                            <SelectItem value="bedroom">Bedroom</SelectItem>
+                            <SelectItem value="kitchen">Kitchen</SelectItem>
+                            <SelectItem value="sitting-room">Sitting Room</SelectItem>
+                            <SelectItem value="lobby">Lobby</SelectItem>
+                            <SelectItem value="toilet">Toilet</SelectItem>
+                            <SelectItem value="full-photo">Full Photo of House</SelectItem>
+                            <SelectItem value="exterior">Exterior</SelectItem>
+                            <SelectItem value="balcony">Balcony</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Label htmlFor={`desc-${index}`} className="text-xs">Description (Optional)</Label>
+                        <Input
+                          id={`desc-${index}`}
+                          placeholder="e.g., Modern kitchen with island"
+                          value={photo.description}
+                          onChange={(event) => {
+                            setFormState((prev) => ({
+                              ...prev,
+                              taggedPhotos: prev.taggedPhotos.map((p, i) =>
+                                i === index ? { ...p, description: event.target.value } : p
+                              ),
+                            }));
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {formState.taggedPhotos.length < 8 && (
+                    <div>
+                      <Input
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (file) {
+                            if (file.size > 5 * 1024 * 1024) {
+                              toast({
+                                variant: 'destructive',
+                                title: 'Image too large',
+                                description: 'Image must be less than 5MB',
+                              });
+                              return;
+                            }
+                            setFormState((prev) => ({
+                              ...prev,
+                              taggedPhotos: [
+                                ...prev.taggedPhotos,
+                                { file, tag: '', description: '' },
+                              ],
+                            }));
+                            event.target.value = '';
+                          }
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Add another tagged photo ({formState.taggedPhotos.length}/8)
+                      </p>
+                    </div>
+                  )}
+                </div>
+
                 {/* Viewing Fee */}
                 <div className="space-y-2 p-4 border rounded-lg bg-muted/50">
                   <Label htmlFor="viewingFee">Viewing/Tour Fee (₦)</Label>
@@ -1256,6 +1376,69 @@ const Dashboard = () => {
                   <Label htmlFor="featured" className="text-sm">
                     Mark as featured property
                   </Label>
+                </div>
+
+                {/* Airbnb Listing */}
+                <div className="flex items-center gap-2">
+                  <input
+                    id="isAirbnb"
+                    type="checkbox"
+                    checked={formState.isAirbnb}
+                    onChange={(event) =>
+                      setFormState((prev) => ({ ...prev, isAirbnb: event.target.checked }))
+                    }
+                  />
+                  <Label htmlFor="isAirbnb" className="text-sm">
+                    🏨 List as Airbnb/Short-term rental
+                  </Label>
+                </div>
+
+                {/* Proof of Address */}
+                <div className="space-y-2 p-4 border rounded-lg bg-muted/50">
+                  <Label htmlFor="proofOfAddress">Proof of Address (Required)</Label>
+                  <Input
+                    id="proofOfAddress"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) {
+                        // Validate file type
+                        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+                        if (!allowedTypes.includes(file.type)) {
+                          toast({
+                            variant: 'destructive',
+                            title: 'Invalid file type',
+                            description: 'Please upload a PDF or image file (JPG, PNG)',
+                          });
+                          event.target.value = '';
+                          setFormState((prev) => ({ ...prev, proofOfAddress: null }));
+                          return;
+                        }
+                        // Validate file size (10MB max)
+                        if (file.size > 10 * 1024 * 1024) {
+                          toast({
+                            variant: 'destructive',
+                            title: 'File too large',
+                            description: 'Proof of address file must be less than 10MB',
+                          });
+                          event.target.value = '';
+                          setFormState((prev) => ({ ...prev, proofOfAddress: null }));
+                          return;
+                        }
+                        setFormState((prev) => ({ ...prev, proofOfAddress: file }));
+                      }
+                    }}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Upload utility bill or Certificate of Occupancy (C of O) for new houses. This will be visible to admin only for verification purposes.
+                  </p>
+                  {formState.proofOfAddress && (
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      Selected: {formState.proofOfAddress.name} ({(formState.proofOfAddress.size / 1024 / 1024).toFixed(2)} MB)
+                    </div>
+                  )}
                 </div>
 
                 {/* Shared Property Toggle */}
