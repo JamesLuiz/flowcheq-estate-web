@@ -93,7 +93,6 @@ const initialFormState = {
   bedrooms: '',
   bathrooms: '',
   area: '',
-  images: [] as File[],
   featured: false,
   coordinates: undefined as { lat: number; lng: number } | undefined,
   // Shared property fields
@@ -264,7 +263,6 @@ const Dashboard = () => {
         bedrooms: Number(formState.bedrooms),
         bathrooms: Number(formState.bathrooms),
         area: Number(formState.area),
-        images: formState.images,
         featured: formState.featured,
         coordinates,
         isShared: formState.isShared,
@@ -396,7 +394,8 @@ const Dashboard = () => {
         extractedState = matchedState;
       }
     }
-    setFormState({
+    setFormState(prev => ({
+      ...prev,
       title: house.title,
       description: house.description,
       price: String(house.price),
@@ -409,15 +408,14 @@ const Dashboard = () => {
       bedrooms: String(house.bedrooms || ''),
       bathrooms: String(house.bathrooms || ''),
       area: String(house.area || ''),
-      images: [],
       featured: house.featured || false,
       coordinates: house.coordinates,
       isShared: (house as any).isShared || false,
       totalSlots: String((house as any).totalSlots || ''),
       viewingFee: String((house as any).viewingFee || ''),
       listingType: (house as any).listingType || 'buy',
-    });
-    setIsEditDialogOpen(true);
+    }));
+   setIsEditDialogOpen(true);
   };
 
   const handleDelete = (houseId: string) => {
@@ -481,26 +479,14 @@ const Dashboard = () => {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    // Validate images before submission
-    if (formState.images.length < 3 || formState.images.length > 5) {
+    // Require at least 3 tagged photos (primary upload channel)
+    if (formState.taggedPhotos.length < 3) {
       toast({
         variant: 'destructive',
-        title: 'Invalid number of images',
-        description: 'Please select between 3 and 5 images.',
+        title: 'Add property photos',
+        description: 'Please add at least 3 tagged photos (up to 8).',
       });
       return;
-    }
-
-    // Validate each image size (max 5MB)
-    for (const image of formState.images) {
-      if (image.size > 5 * 1024 * 1024) {
-        toast({
-          variant: 'destructive',
-          title: 'Image too large',
-          description: `${image.name} is larger than 5MB. Please compress or select a smaller image.`,
-        });
-        return;
-      }
     }
 
     // Build location string from address parts
@@ -1167,72 +1153,6 @@ const Dashboard = () => {
                       required
                     />
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="images">Property Images (3-5 images required)</Label>
-                  <Input
-                    id="images"
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/webp"
-                    multiple
-                    onChange={(event) => {
-                      const files = Array.from(event.target.files || []);
-                      
-                      // Validate number of files
-                      if (files.length < 3 || files.length > 5) {
-                        toast({
-                          variant: 'destructive',
-                          title: 'Invalid number of images',
-                          description: 'Please select between 3 and 5 images.',
-                        });
-                        // Clear the input
-                        event.target.value = '';
-                        setFormState((prev) => ({ ...prev, images: [] }));
-                        return;
-                      }
-
-                      // Validate file sizes
-                      const invalidFiles: string[] = [];
-                      for (const file of files) {
-                        if (file.size > 5 * 1024 * 1024) {
-                          invalidFiles.push(file.name);
-                        }
-                      }
-
-                      if (invalidFiles.length > 0) {
-                        toast({
-                          variant: 'destructive',
-                          title: 'Image too large',
-                          description: `${invalidFiles.join(', ')} ${invalidFiles.length === 1 ? 'is' : 'are'} larger than 5MB. Please select smaller images.`,
-                        });
-                        // Clear the input
-                        event.target.value = '';
-                        setFormState((prev) => ({ ...prev, images: [] }));
-                        return;
-                      }
-
-                      setFormState((prev) => ({ ...prev, images: files }));
-                    }}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Upload 3-5 images of your property (JPG, PNG, or WebP, max 5MB each).
-                  </p>
-                  {formState.images.length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      <div className="text-sm text-muted-foreground">
-                      {formState.images.length} image(s) selected
-                      </div>
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        {formState.images.map((img, idx) => (
-                          <div key={idx} className="flex items-center justify-between">
-                            <span className="truncate max-w-[200px]">{img.name}</span>
-                            <span className="text-xs">{(img.size / 1024 / 1024).toFixed(2)} MB</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Tagged Photos Section */}

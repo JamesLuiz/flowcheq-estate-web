@@ -343,7 +343,12 @@ const housesApi = {
     const taggedPhotoTags = taggedPhotos?.map(p => p.tag);
     const taggedPhotoDescriptions = taggedPhotos?.map(p => p.description);
     
-    if (files && files.length > 0) {
+    const shouldUseMultipart =
+      (files && files.length > 0) ||
+      !!proofFile ||
+      (taggedPhotoFiles && taggedPhotoFiles.length > 0);
+
+    if (shouldUseMultipart) {
       return requestWithFiles<House>('/houses', 'POST', {
         body: restPayload,
         files,
@@ -353,6 +358,7 @@ const housesApi = {
         taggedPhotoDescriptions,
       });
     }
+
     return request<House>('/houses', 'POST', { body: payload });
   },
   update: (id: string, payload: Partial<House>) =>
