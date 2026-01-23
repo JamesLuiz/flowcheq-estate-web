@@ -235,28 +235,16 @@ const Dashboard = () => {
 
   const createListingMutation = useMutation({
     mutationFn: ({ coordinates, location }: { coordinates?: { lat: number; lng: number }; location: string }) => {
-      // Strip HTML tags and get plain text from RichTextEditor description
-      // Remove empty paragraphs and whitespace
-      const stripHtml = (html: string): string => {
-        if (!html) return '';
-        // Create a temporary div to parse HTML
-        const tmp = document.createElement('div');
-        tmp.innerHTML = html;
-        let text = tmp.textContent || tmp.innerText || '';
-        // Clean up whitespace
-        text = text.trim().replace(/\s+/g, ' ');
-        return text;
-      };
-
-      const cleanDescription = stripHtml(formState.description);
+      // Keep HTML formatting from RichTextEditor - don't strip it
+      const description = formState.description?.trim();
       
-      if (!cleanDescription) {
+      if (!description || description === '<p><br></p>') {
         throw new Error('Description is required. Please enter a property description.');
       }
 
       return api.houses.create({
         title: formState.title,
-        description: cleanDescription,
+        description: description, // Send HTML as-is
         price: Number(formState.price),
         location,
         type: formState.type,

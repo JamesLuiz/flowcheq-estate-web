@@ -311,6 +311,15 @@ const Auth = () => {
                     <Button type="submit" className="w-full" disabled={signupLoading}>
                       {signupLoading ? 'Creating account...' : 'Create Account'}
                     </Button>
+                    
+                    <div className="text-center pt-4 border-t">
+                      <p className="text-sm text-muted-foreground mb-2">Are you a real estate company?</p>
+                      <Link to="/auth/company">
+                        <Button variant="outline" type="button" className="w-full">
+                          Register as a Company
+                        </Button>
+                      </Link>
+                    </div>
                   </form>
                 </CardContent>
               </Card>

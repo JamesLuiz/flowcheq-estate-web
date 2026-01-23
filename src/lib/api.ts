@@ -177,6 +177,56 @@ const authApi = {
       body: payload,
       skipAuth: true,
     }),
+  registerCompany: async (payload: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+    bio?: string;
+    companyDetails: {
+      companyName: string;
+      cacNumber: string;
+      businessEmail: string;
+      businessPhone: string;
+      address: string;
+      city: string;
+      state: string;
+      website?: string;
+      yearEstablished?: number;
+      companySize?: string;
+    };
+    cacDocument: File;
+  }) => {
+    const { cacDocument, ...restPayload } = payload;
+    
+    const formData = new FormData();
+    formData.append('cacDocument', cacDocument);
+    formData.append('data', JSON.stringify(restPayload));
+    
+    const url = `${getApiBaseUrl()}/auth/register-company`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      let errorMessage = response.statusText;
+      try {
+        const errorBody = await response.json();
+        if (Array.isArray(errorBody?.message)) {
+          errorMessage = errorBody.message.join(', ');
+        } else if (typeof errorBody?.message === 'string') {
+          errorMessage = errorBody.message;
+        }
+      } catch {
+        // ignore
+      }
+      throw new Error(errorMessage);
+    }
+    
+    return (await response.json()) as { message: string };
+  },
   login: (payload: { email: string; password: string }) =>
     request<{ accessToken: string; user: Agent }>('/auth/login', 'POST', {
       body: payload,
@@ -332,16 +382,17 @@ const housesApi = {
   create: (payload: Omit<Partial<House>, 'images'> & { 
     images?: File[] | string[]; 
     proofOfAddress?: File | null;
-    taggedPhotos?: Array<{ file: File; tag: string; description: string }>;
+    taggedPhotos?: Array<{ file?: File; url?: string; tag: string; description?: string }>;
   }) => {
     const { images, proofOfAddress, taggedPhotos, ...restPayload } = payload;
     const files = images as File[] | undefined;
     const proofFile = proofOfAddress as File | undefined;
     
-    // Extract tagged photo files, tags, and descriptions
-    const taggedPhotoFiles = taggedPhotos?.map(p => p.file);
-    const taggedPhotoTags = taggedPhotos?.map(p => p.tag);
-    const taggedPhotoDescriptions = taggedPhotos?.map(p => p.description);
+    // Extract tagged photo files, tags, and descriptions (only include items with file property)
+    const photosWithFiles = taggedPhotos?.filter(p => 'file' in p && (p as any).file) ?? [];
+    const taggedPhotoFiles = photosWithFiles.map(p => (p as any).file as File);
+    const taggedPhotoTags = photosWithFiles.map(p => p.tag);
+    const taggedPhotoDescriptions = photosWithFiles.map(p => p.description);
     
     const shouldUseMultipart =
       (files && files.length > 0) ||

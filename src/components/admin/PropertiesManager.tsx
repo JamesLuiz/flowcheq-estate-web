@@ -38,6 +38,19 @@ export const PropertiesManager = () => {
     property: House | null;
     action: 'flag' | 'unflag' | 'delete' | null;
   }>({ open: false, property: null, action: null });
+  const [verificationDialog, setVerificationDialog] = useState<{ open: boolean; property: House | null }>({ open: false, property: null });
+
+  const verifyAddressMutation = useMutation({
+    mutationFn: (propertyId: string) => api.admin.verifyPropertyAddress(propertyId),
+    onSuccess: () => {
+      toast({ title: 'Address verified', description: 'Property address has been marked as verified.' });
+      queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+      setVerificationDialog({ open: false, property: null });
+    },
+    onError: (error: Error) => {
+      toast({ variant: 'destructive', title: 'Failed to verify address', description: error.message });
+    },
+  });
   const [reason, setReason] = useState('');
 
   const propertiesQuery = useQuery({
@@ -215,10 +228,16 @@ export const PropertiesManager = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => navigate(`/house/${property.id}`)}
+                            onClick={() => setVerificationDialog({ open: true, property })}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
+                          {property.addressVerified && (
+                            <Badge className="bg-green-600 text-white flex items-center gap-1">
+                              <CheckCircle className="h-4 w-4" />
+                              Verified
+                            </Badge>
+                          )}
                           {(property as any).flagged ? (
                             <Button
                               size="sm"
@@ -309,6 +328,58 @@ export const PropertiesManager = () => {
                 'Confirm'
               )}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={verificationDialog.open}
+        onOpenChange={(open) => !open && setVerificationDialog({ open: false, property: null })}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Proof of Address</DialogTitle>
+            <DialogDescription>
+              View the proof of address uploaded by the agent for this property.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {verificationDialog.property?.proofOfAddress ? (
+              <div className="w-full flex flex-col items-center">
+                <img
+                  src={verificationDialog.property.proofOfAddress}
+                  alt="Proof of address"
+                  className="max-h-[60vh] w-auto rounded shadow-md object-contain"
+                />
+                <div className="flex gap-2 mt-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(verificationDialog.property?.proofOfAddress, '_blank')}
+                  >
+                    Open in new tab
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className={!verificationDialog.property?.addressVerified ? 'bg-green-600 text-white' : ''}
+                    onClick={() => verificationDialog.property && verifyAddressMutation.mutate(verificationDialog.property.id)}
+                    disabled={verifyAddressMutation.isPending || verificationDialog.property?.addressVerified}
+                  >
+                    {verificationDialog.property?.addressVerified ? 'Already Verified' : 'Mark Address Verified'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                No proof of address uploaded for this property.
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVerificationDialog({ open: false, property: null })}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

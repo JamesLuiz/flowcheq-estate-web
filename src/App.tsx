@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { SplashScreen } from "@/components/SplashScreen";
 import Index from "./pages/Index";
 import HouseDetails from "./pages/HouseDetails";
 import AgentProfile from "./pages/AgentProfile";
@@ -19,6 +21,7 @@ import PropertyComparison from "./pages/PropertyComparison";
 import MapView from "./pages/MapView";
 import SearchMap from "./pages/SearchMap";
 import Auth from "./pages/Auth";
+import CompanyAuth from "./pages/CompanyAuth";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ContactUs from "./pages/ContactUs";
@@ -32,10 +35,32 @@ import { AuthProvider } from "./context/AuthContext";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-      <AuthProvider>
+const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    // Wait for document to be fully loaded
+    if (document.readyState === 'complete') {
+      setIsLoaded(true);
+    } else {
+      const handleLoad = () => setIsLoaded(true);
+      window.addEventListener('load', handleLoad);
+      return () => window.removeEventListener('load', handleLoad);
+    }
+  }, []);
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        {isLoaded && showSplash && (
+          <SplashScreen onComplete={handleSplashComplete} minimumDisplayTime={2500} />
+        )}
+        <AuthProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -59,6 +84,7 @@ const App = () => (
               <Route path="/map" element={<MapView />} />
               <Route path="/search-map" element={<SearchMap />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/company" element={<CompanyAuth />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/contact" element={<ContactUs />} />
@@ -70,9 +96,10 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
