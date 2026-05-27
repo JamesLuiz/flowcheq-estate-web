@@ -27,6 +27,9 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import { usePropertyViewTracker } from '@/hooks/usePropertyViewTracker';
+import { AgentRequestManage } from '@/components/agent/AgentRequestManage';
+import { isAgentRole } from '@/lib/roles';
 import MessageButton from '@/components/MessageButton';
 import {
   Dialog,
@@ -36,12 +39,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
-    minimumFractionDigits: 0,
-  }).format(price);
+import { formatPriceNgn } from '@/lib/format';
 
 const HouseDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -71,8 +69,9 @@ const HouseDetails = () => {
   const agent = house?.agent;
   const isHouseFavorite = house ? isFavorite(house.id) : false;
 
-  // Determine if the current viewer is the owner/agent/landlord of this property
   const isOwner = Boolean(user?.id && (user.id === house?.agentId || user.id === agent?.id));
+
+  usePropertyViewTracker(id, Boolean(house) && !isOwner);
   
   // Check if user has booked a slot
   const hasBookedSlot = house?.bookedByUsers?.includes(user?.id || '') || false;
@@ -125,7 +124,7 @@ const HouseDetails = () => {
   const shareViaWhatsApp = () => {
     if (!house) return;
     const text = encodeURIComponent(
-      `Check out this property: ${house.title} - ${formatPrice(house.price)}\n${window.location.href}`,
+      `Check out this property: ${house.title} - ${formatPriceNgn(house.price)}\n${window.location.href}`,
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
@@ -135,7 +134,7 @@ const HouseDetails = () => {
 
     const shareData = {
       title: house.title,
-      text: `Check out this property: ${house.title} - ${formatPrice(house.price)}`,
+      text: `Check out this property: ${house.title} - ${formatPriceNgn(house.price)}`,
       url: window.location.href,
     };
 
@@ -172,7 +171,7 @@ const HouseDetails = () => {
     let message = `🏠 *Property Inquiry*\n\n`;
     message += `*${house.title}*\n\n`;
     message += `📍 Location: ${house.location}\n`;
-    message += `💰 Price: ${formatPrice(house.price)}\n`;
+    message += `💰 Price: ${formatPriceNgn(house.price)}\n`;
     if (house.bedrooms) message += `🛏️ Bedrooms: ${house.bedrooms}\n`;
     if (house.bathrooms) message += `🚿 Bathrooms: ${house.bathrooms}\n`;
     if (house.area) message += `📐 Area: ${house.area}m²\n`;
@@ -328,11 +327,11 @@ const HouseDetails = () => {
                       <span className="ml-2 text-xs text-primary">(View on Map)</span>
                     )}
                   </button>
-                  <p className="text-3xl font-bold text-primary">{formatPrice(house.price)}</p>
+                  <p className="text-3xl font-bold text-primary">{formatPriceNgn(house.price)}</p>
                   {house.viewingFee && house.viewingFee > 0 && (
                     <div className="mt-2 p-3 bg-accent/10 rounded-lg border border-accent/20 inline-block">
                       <p className="text-sm font-medium text-accent-foreground">
-                        🎟️ Viewing Fee: <span className="text-primary font-bold">{formatPrice(house.viewingFee)}</span>
+                        🎟️ Inspection Fee: <span className="text-primary font-bold">{formatPriceNgn(house.viewingFee)}</span>
                       </p>
                     </div>
                   )}
@@ -551,18 +550,21 @@ const HouseDetails = () => {
                                 </Button>
                               </Link>
                             )}
+                            {isAgentRole(user?.role) && id && (
+                              <AgentRequestManage propertyId={id} propertyTitle={house.title} />
+                            )}
                           </>
                         ) : (
                           <>
                             <Button
-                              onClick={() => navigate('/dashboard')}
+                              onClick={() => navigate('/landlord/dashboard')}
                               className="w-full"
                               size="lg"
                             >
                               Edit / Manage Listing
                             </Button>
                             <Button
-                              onClick={() => navigate('/dashboard')}
+                              onClick={() => navigate('/landlord/dashboard')}
                               variant="outline"
                               className="w-full"
                               size="lg"

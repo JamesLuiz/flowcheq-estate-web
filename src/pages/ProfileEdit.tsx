@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import { getDashboardPathForRole, isAgentRole, isListingOwnerRole } from '@/lib/roles';
 
 const ProfileEdit = () => {
   const { user, refresh } = useAuth();
@@ -31,7 +32,7 @@ const ProfileEdit = () => {
         title: 'Profile updated',
         description: 'Your profile has been updated successfully.',
       });
-      navigate('/dashboard');
+      navigate(getDashboardPathForRole(user?.role));
     },
     onError: (error: Error) => {
       toast({
@@ -72,7 +73,7 @@ const ProfileEdit = () => {
     }
   };
 
-  if (!user || (user.role !== 'agent' && user.role !== 'landlord')) {
+  if (!user || (!isAgentRole(user.role) && !isListingOwnerRole(user.role))) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -87,7 +88,7 @@ const ProfileEdit = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-6">
+        <Button variant="ghost" onClick={() => navigate(getDashboardPathForRole(user?.role))} className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Dashboard
         </Button>

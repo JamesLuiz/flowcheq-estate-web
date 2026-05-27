@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { ThemeToggle } from './ThemeToggle';
 import { api } from '@/lib/api';
+import { getDashboardPathForRole, getWalletPathForRole, isAgentRole, isListingOwnerRole } from '@/lib/roles';
 import { Badge } from './ui/badge';
 import {
   DropdownMenu,
@@ -44,7 +45,8 @@ export const Navbar = () => {
     navigate('/');
   };
 
-  const dashboardPath = user?.role === 'agent' || user?.role === 'landlord' ? '/dashboard' : '/user-dashboard';
+  const dashboardPath = getDashboardPathForRole(user?.role);
+  const walletPath = getWalletPathForRole(user?.role);
   const avatarInitials = user?.name
     ? user.name
         .split(' ')
@@ -125,7 +127,7 @@ export const Navbar = () => {
                         )}
                       </Link>
                     </DropdownMenuItem>
-                    {(user?.role === 'agent' || user?.role === 'landlord') && (
+                    {(isAgentRole(user?.role) || isListingOwnerRole(user?.role)) && (
                       <>
                         <DropdownMenuItem asChild>
                           <Link to="/profile/edit" className="flex items-center gap-2">
@@ -134,11 +136,19 @@ export const Navbar = () => {
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link to="/agent-guide" className="flex items-center gap-2">
+                          <Link to={walletPath} className="flex items-center gap-2">
                             <Home className="h-4 w-4" />
-                            <span>Agent Guide</span>
+                            <span>Wallet</span>
                           </Link>
                         </DropdownMenuItem>
+                        {isAgentRole(user?.role) && (
+                          <DropdownMenuItem asChild>
+                            <Link to="/agent-guide" className="flex items-center gap-2">
+                              <Home className="h-4 w-4" />
+                              <span>Agent Guide</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
                       </>
                     )}
                     {user?.role === 'admin' && (

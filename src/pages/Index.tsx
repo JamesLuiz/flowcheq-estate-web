@@ -16,6 +16,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import heroImage from '@/assets/hero-abuja.jpg';
 import { placeholderProperties } from '@/data/placeholderProperties';
+import { formatPriceNgn } from '@/lib/format';
 
 const Index = () => {
   const [filters, setFilters] = useState<FilterParams>({});
@@ -44,7 +45,7 @@ const Index = () => {
 
   const queryFilters = useMemo(() => {
     const { type, radius, ...rest } = filters;
-    const cleanFilters: any = {
+    const cleanFilters: FilterParams = {
       ...rest,
       type: type && type !== 'all' ? type : undefined,
     };
@@ -89,10 +90,21 @@ const Index = () => {
   });
 
   const apiHouses = housesQuery.data?.data ?? [];
-  // Use placeholder properties if no real properties are available
-  const houses = apiHouses.length > 0 ? apiHouses : (placeholderProperties as House[]);
+  const useDevPlaceholders =
+    import.meta.env.DEV &&
+    !housesQuery.isError &&
+    !housesQuery.isLoading &&
+    apiHouses.length === 0 &&
+    !hasActiveFilters;
+  const houses = housesQuery.isError
+    ? []
+    : apiHouses.length > 0
+      ? apiHouses
+      : useDevPlaceholders
+        ? (placeholderProperties as House[])
+        : [];
   const featuredHouses = houses.filter((house) => house.featured);
-  const showingPlaceholders = apiHouses.length === 0;
+  const showingPlaceholders = useDevPlaceholders;
 
   useEffect(() => {
     if (!hasActiveFilters) return;
@@ -100,7 +112,7 @@ const Index = () => {
     const searchFilters = {
       priceRange:
         filters.minPrice || filters.maxPrice
-          ? `₦${filters.minPrice || 0} - ₦${filters.maxPrice || '∞'}`
+          ? `${formatPriceNgn(Number(filters.minPrice) || 0)} - ${filters.maxPrice ? formatPriceNgn(Number(filters.maxPrice)) : '∞'}`
           : undefined,
       type: filters.type && filters.type !== 'all' ? filters.type : undefined,
       location: filters.location || undefined,
@@ -281,10 +293,10 @@ const Index = () => {
           ) : (
             <div className="space-y-4">
               {showingPlaceholders && (
-                <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 text-center">
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 text-center">
                   <p className="text-sm text-muted-foreground">
-                    <strong>Sample Properties:</strong> These are example listings to showcase what's available on House me. 
-                    Real properties will appear once agents add listings.
+                    <strong>Dev sample listings:</strong> The API returned no properties. These placeholders
+                    are only shown in development when the catalog is empty.
                   </p>
                 </div>
               )}

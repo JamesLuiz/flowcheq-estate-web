@@ -9,12 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { api } from '@/lib/api';
 
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
-    minimumFractionDigits: 0,
-  }).format(price);
+import { formatPriceNgn } from '@/lib/format';
 
 const PropertyComparison = () => {
   const [searchParams] = useSearchParams();
@@ -99,7 +94,7 @@ const PropertyComparison = () => {
                       <MapPin className="h-4 w-4 mr-1" />
                       <span>{house.location}</span>
                     </div>
-                    <p className="text-2xl font-bold text-primary">{formatPrice(house.price)}</p>
+                    <p className="text-2xl font-bold text-primary">{formatPriceNgn(house.price)}</p>
                   </div>
 
                   <div className="space-y-3 pt-4 border-t border-border">
@@ -135,7 +130,7 @@ const PropertyComparison = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Price per m²</span>
                       <span className="font-medium">
-                        {house.area ? formatPrice(Math.round(house.price / house.area)) : '—'}
+                        {house.area ? formatPriceNgn(Math.round(house.price / house.area)) : '—'}
                       </span>
                     </div>
                   </div>

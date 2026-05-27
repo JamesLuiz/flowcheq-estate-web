@@ -29,13 +29,17 @@ export const VerificationDialog = () => {
   const selfieInputRef = useRef<HTMLInputElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [documentType, setDocumentType] = useState<'nin' | 'driver_license'>('nin');
+  const isLandlordRole =
+    user?.role === 'landlord' ||
+    user?.role === 'real_estate_company' ||
+    user?.role === 'company';
   const [selectedDocument, setSelectedDocument] = useState<File | null>(null);
   const [selectedSelfie, setSelectedSelfie] = useState<File | null>(null);
 
   const { data: verification, isLoading: isLoadingVerification } = useQuery({
     queryKey: ['verification', user?.id],
     queryFn: () => api.verifications.getMyVerification(),
-    enabled: !!user && (user.role === 'agent' || user.role === 'landlord'),
+    enabled: !!user && (user.role === 'agent' || isLandlordRole),
   });
 
   const uploadMutation = useMutation({
@@ -124,7 +128,8 @@ export const VerificationDialog = () => {
       return;
     }
 
-    uploadMutation.mutate({ document: selectedDocument, selfie: selectedSelfie, type: documentType });
+    const type = isLandlordRole ? 'nin' : documentType;
+    uploadMutation.mutate({ document: selectedDocument, selfie: selectedSelfie, type });
   };
 
   // Check verification status
@@ -132,8 +137,42 @@ export const VerificationDialog = () => {
   const isPending = user?.verificationStatus === 'pending' || verification?.status === 'pending';
   const isRejected = user?.verificationStatus === 'rejected' || verification?.status === 'rejected';
 
-  if (user?.role !== 'agent' && user?.role !== 'landlord') {
+  const resendEmailMutation = useMutation({
+    mutationFn: () => api.auth.resendEmailVerification(),
+    onSuccess: (data) => {
+      toast({ title: 'Email sent', description: data.message });
+    },
+    onError: (error: Error) => {
+      toast({ variant: 'destructive', title: 'Could not send email', description: error.message });
+    },
+  });
+
+  if (user?.role !== 'agent' && !isLandlordRole) {
     return null;
+  }
+
+  if (isLandlordRole && !user?.emailVerified) {
+    return (
+      <Card className="border-amber-500/40 bg-amber-500/5">
+        <CardContent className="pt-6 space-y-3">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Verify your email</AlertTitle>
+            <AlertDescription>
+              Landlord verification requires a verified email, NIN on your profile, and a selfie.
+              Check your inbox for the link we sent when you registered.
+            </AlertDescription>
+          </Alert>
+          <Button
+            variant="outline"
+            onClick={() => resendEmailMutation.mutate()}
+            disabled={resendEmailMutation.isPending}
+          >
+            {resendEmailMutation.isPending ? 'Sending…' : 'Resend verification email'}
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   const benefits = [
@@ -248,23 +287,27 @@ export const VerificationDialog = () => {
             </Alert>
           )}
 
-          {/* Document Type Selection */}
-          <div className="space-y-2">
-            <Label>Document Type</Label>
-            <Select value={documentType} onValueChange={(v: 'nin' | 'driver_license') => setDocumentType(v)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="nin">National Identification Number (NIN)</SelectItem>
-                <SelectItem value="driver_license">Driver's License</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {isLandlordRole ? (
+            <p className="text-sm text-muted-foreground">
+              Landlord verification: <strong>NIN</strong> (number on your profile) + upload a photo of your NIN slip/card + <strong>selfie</strong>. Email must already be verified.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <Label>Document Type</Label>
+              <Select value={documentType} onValueChange={(v: 'nin' | 'driver_license') => setDocumentType(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="nin">National Identification Number (NIN)</SelectItem>
+                  <SelectItem value="driver_license">Driver's License</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-          {/* Document Upload */}
           <div className="space-y-2">
-            <Label>Upload Document</Label>
+            <Label>{isLandlordRole ? 'Upload NIN document (photo/PDF)' : 'Upload Document'}</Label>
             <input
               ref={documentInputRef}
               type="file"

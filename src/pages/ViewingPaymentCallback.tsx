@@ -5,6 +5,7 @@ import { Navbar } from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
+import { formatPriceNgn } from '@/lib/format';
 
 const ViewingPaymentCallback = () => {
   const [searchParams] = useSearchParams();
@@ -36,7 +37,7 @@ const ViewingPaymentCallback = () => {
         const result = await api.viewings.verifyPayment(txRef);
         if (result && result.paymentStatus === 'paid') {
           setStatus('success');
-          setMessage('Your viewing fee has been paid successfully!');
+          setMessage('Your inspection fee has been paid successfully!');
           setViewingDetails(result);
         } else {
           setStatus('error');
@@ -90,7 +91,7 @@ const ViewingPaymentCallback = () => {
                   <p><strong>Property:</strong> {viewingDetails.houseId?.title || 'N/A'}</p>
                   <p><strong>Date:</strong> {viewingDetails.scheduledDate}</p>
                   <p><strong>Time:</strong> {viewingDetails.scheduledTime}</p>
-                  <p><strong>Amount Paid:</strong> ₦{viewingDetails.amountPaid?.toLocaleString()}</p>
+                  <p><strong>Amount Paid:</strong> {viewingDetails.amountPaid != null ? formatPriceNgn(viewingDetails.amountPaid) : '—'}</p>
                   <p className="text-muted-foreground text-xs mt-2">
                     The agent has been notified and will confirm your viewing shortly.
                   </p>

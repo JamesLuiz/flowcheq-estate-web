@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
+import { formatPriceNgn } from '@/lib/format';
 import { format } from 'date-fns';
 
 interface PendingDisbursement {
@@ -228,7 +229,7 @@ export const DisbursementsManager = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-600">₦{totalPending.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-amber-600">{formatPriceNgn(totalPending)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -241,7 +242,7 @@ export const DisbursementsManager = () => {
           <CardContent>
             <div className="text-2xl font-bold">{selectedForBulk.size}</div>
             {selectedForBulk.size > 0 && (
-              <p className="text-sm text-muted-foreground">₦{selectedBulkTotal.toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground">{formatPriceNgn(selectedBulkTotal)}</p>
             )}
           </CardContent>
         </Card>
@@ -253,7 +254,7 @@ export const DisbursementsManager = () => {
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertTitle className="text-amber-800 dark:text-amber-200">Pending Disbursements</AlertTitle>
           <AlertDescription className="text-amber-700 dark:text-amber-300">
-            {pendingCount} agent(s) have ₦{totalPending.toLocaleString()} pending for manual disbursement. 
+            {pendingCount} agent(s) have {formatPriceNgn(totalPending)} pending for manual disbursement. 
             These are agents without virtual accounts or where split payments weren't configured.
           </AlertDescription>
         </Alert>
@@ -277,7 +278,7 @@ export const DisbursementsManager = () => {
               className="bg-green-600 hover:bg-green-700"
             >
               <Send className="h-4 w-4 mr-2" />
-              Process {selectedForBulk.size} Disbursement(s) (₦{selectedBulkTotal.toLocaleString()})
+              Process {selectedForBulk.size} Disbursement(s) ({formatPriceNgn(selectedBulkTotal)})
             </Button>
           )}
           <Button
@@ -300,7 +301,7 @@ export const DisbursementsManager = () => {
             Pending Manual Disbursements
           </CardTitle>
           <CardDescription>
-            Agents requiring manual transfer of viewing fee earnings
+            Agents requiring manual transfer of inspection fee earnings
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -373,10 +374,10 @@ export const DisbursementsManager = () => {
                       <TableCell>
                         <div>
                           <p className="font-bold text-lg text-amber-600">
-                            ₦{disbursement.pendingAmount.toLocaleString()}
+                            {formatPriceNgn(disbursement.pendingAmount)}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Total Earnings: ₦{disbursement.totalEarnings.toLocaleString()}
+                            Total Earnings: {formatPriceNgn(disbursement.totalEarnings)}
                           </p>
                         </div>
                       </TableCell>
@@ -442,7 +443,7 @@ export const DisbursementsManager = () => {
                   max={selectedAgent.pendingAmount}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Maximum: ₦{selectedAgent.pendingAmount.toLocaleString()}
+                  Maximum: {formatPriceNgn(selectedAgent.pendingAmount)}
                 </p>
               </div>
 
@@ -452,7 +453,7 @@ export const DisbursementsManager = () => {
                   id="reason"
                   value={disbursementReason}
                   onChange={(e) => setDisbursementReason(e.target.value)}
-                  placeholder="e.g., Manual viewing fee disbursement"
+                  placeholder="e.g., Manual inspection fee disbursement"
                 />
               </div>
 
@@ -463,7 +464,7 @@ export const DisbursementsManager = () => {
                     {selectedAgent.recentEarnings.map((earning) => (
                       <div key={earning.id} className="text-xs p-2 bg-muted rounded flex justify-between">
                         <span>{earning.description || earning.type}</span>
-                        <span className="font-semibold">₦{earning.amount.toLocaleString()}</span>
+                        <span className="font-semibold">{formatPriceNgn(earning.amount)}</span>
                       </div>
                     ))}
                   </div>
@@ -510,7 +511,7 @@ export const DisbursementsManager = () => {
               <AlertTriangle className="h-4 w-4 text-amber-600" />
               <AlertTitle className="text-amber-800 dark:text-amber-200">Confirm Bulk Transfer</AlertTitle>
               <AlertDescription className="text-amber-700 dark:text-amber-300">
-                You are about to process ₦{selectedBulkTotal.toLocaleString()} in disbursements 
+                You are about to process {formatPriceNgn(selectedBulkTotal)} in disbursements 
                 to {selectedForBulk.size} agents. This action cannot be undone.
               </AlertDescription>
             </Alert>
@@ -521,7 +522,7 @@ export const DisbursementsManager = () => {
                 .map(d => (
                   <div key={d.agent.id} className="flex justify-between p-2 bg-muted rounded text-sm">
                     <span>{d.agent.name}</span>
-                    <span className="font-semibold">₦{d.pendingAmount.toLocaleString()}</span>
+                    <span className="font-semibold">{formatPriceNgn(d.pendingAmount)}</span>
                   </div>
                 ))}
             </div>
@@ -532,7 +533,7 @@ export const DisbursementsManager = () => {
                 id="bulkReason"
                 value={bulkReason}
                 onChange={(e) => setBulkReason(e.target.value)}
-                placeholder="e.g., Weekly viewing fee disbursement"
+                placeholder="e.g., Weekly inspection fee disbursement"
               />
             </div>
           </div>

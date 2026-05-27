@@ -8,6 +8,7 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/context/AuthContext';
 import { VerificationBadge } from '@/components/VerificationBadge';
 import { api } from '@/lib/api';
+import { formatPriceNgn } from '@/lib/format';
 
 interface HouseCardProps {
   house: House;
@@ -24,14 +25,6 @@ export const HouseCard = ({ house }: HouseCardProps) => {
   // Determine if current user is the owner/agent/landlord of this property
   const isOwner = Boolean(user?.id && (user.id === house.agentId || user.id === house.agent?.id));
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
-
   const handleWhatsAppClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -46,7 +39,7 @@ export const HouseCard = ({ house }: HouseCardProps) => {
     let message = `🏠 *Property Inquiry*\n\n`;
     message += `*${house.title}*\n\n`;
     message += `📍 Location: ${house.location}\n`;
-    message += `💰 Price: ${formatPrice(house.price)}\n`;
+    message += `💰 Price: ${formatPriceNgn(house.price)}\n`;
     if (house.bedrooms) message += `🛏️ Bedrooms: ${house.bedrooms}\n`;
     if (house.bathrooms) message += `🚿 Bathrooms: ${house.bathrooms}\n`;
     if (house.area) message += `📐 Area: ${house.area}m²\n`;
@@ -195,7 +188,7 @@ export const HouseCard = ({ house }: HouseCardProps) => {
 
         <CardFooter className="p-4 pt-0 flex flex-col gap-3">
           <div className="w-full flex items-center justify-between">
-            <p className="text-2xl font-bold text-primary">{formatPrice(house.price)}</p>
+            <p className="text-2xl font-bold text-primary">{formatPriceNgn(house.price)}</p>
             <Badge variant="outline" className="text-xs">
               <Eye className="h-3 w-3 mr-1" />
               {house.viewCount || 0}

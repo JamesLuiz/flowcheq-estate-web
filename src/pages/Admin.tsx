@@ -30,6 +30,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import { formatPriceNgn } from '@/lib/format';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { UnverifiedAgentsManager } from '@/components/admin/UnverifiedAgentsManager';
@@ -409,7 +410,7 @@ const Admin = () => {
                   <Loader2 className="h-5 w-5 animate-spin text-primary" />
                 </div>
               ) : (
-                <div className="text-2xl font-bold">₦{(adminStatsQuery.data?.totalPlatformRevenue ?? totalPromotionRevenue).toLocaleString()}</div>
+                <div className="text-2xl font-bold">{formatPriceNgn(adminStatsQuery.data?.totalPlatformRevenue ?? totalPromotionRevenue)}</div>
               )}
             </CardContent>
           </Card>
@@ -692,7 +693,7 @@ const Admin = () => {
                               {getStatusBadge(promotion.status)}
                             </TableCell>
                             <TableCell className="hidden sm:table-cell">
-                              <span className="font-semibold">₦{promotion.amount?.toLocaleString()}</span>
+                              <span className="font-semibold">{promotion.amount != null ? formatPriceNgn(promotion.amount) : '—'}</span>
                             </TableCell>
                             <TableCell className="hidden lg:table-cell">
                               {promotion.clicks}
@@ -756,7 +757,7 @@ const Admin = () => {
                   Platform Fee Settings
                 </CardTitle>
                 <CardDescription>
-                  Set the platform fee percentage deducted from viewing fees
+                  Set the platform fee percentage deducted from inspection fees
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -770,7 +771,7 @@ const Admin = () => {
                       <div>
                         <p className="font-semibold">Current Platform Fee</p>
                         <p className="text-sm text-muted-foreground">
-                          {platformFeeQuery.data?.platformFeePercentage || 10}% of viewing fee
+                          {platformFeeQuery.data?.platformFeePercentage || 10}% of inspection fee
                         </p>
                       </div>
                       <Badge variant="outline" className="text-lg">
@@ -818,7 +819,7 @@ const Admin = () => {
                         </Button>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Set the platform fee percentage deducted from viewing fees (0-100%).
+                        Set the platform fee percentage deducted from inspection fees (0-100%).
                       </p>
                     </div>
                   </div>
@@ -826,12 +827,12 @@ const Admin = () => {
               </CardContent>
             </Card>
 
-            {/* Viewing Fees List */}
+            {/* Inspection Fees List */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-primary" />
-                  Viewing Fees & Receipts
+                  Inspection Fees & Receipts
                 </CardTitle>
                 <CardDescription>
                   Manage all property viewing requests, fees, and payment receipts
@@ -907,11 +908,11 @@ const Admin = () => {
                             <TableCell>
                               {viewing.viewingFee ? (
                                 <div className="text-sm">
-                                  <p className="font-semibold">₦{viewing.viewingFee.toLocaleString()}</p>
+                                  <p className="font-semibold">{formatPriceNgn(viewing.viewingFee)}</p>
                                   {viewing.platformFee && viewing.agentAmount !== undefined && (
                                     <div className="text-xs text-muted-foreground mt-1">
-                                      <p>Platform: ₦{((viewing.viewingFee * viewing.platformFee) / 100).toFixed(2)}</p>
-                                      <p>Agent: ₦{viewing.agentAmount.toLocaleString()}</p>
+                                      <p>Platform: {formatPriceNgn((viewing.viewingFee * viewing.platformFee) / 100)}</p>
+                                      <p>Agent: {formatPriceNgn(viewing.agentAmount)}</p>
                                     </div>
                                   )}
                                 </div>
@@ -1188,7 +1189,7 @@ const Admin = () => {
                 </div>
                 <div>
                   <Label>Amount Paid</Label>
-                  <p className="font-semibold text-lg">₦{selectedPromotion.amount?.toLocaleString()}</p>
+                  <p className="font-semibold text-lg">{selectedPromotion.amount != null ? formatPriceNgn(selectedPromotion.amount) : '—'}</p>
                 </div>
                 <div>
                   <Label>Duration</Label>

@@ -48,6 +48,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import { formatPriceNgn } from '@/lib/format';
 import { NIGERIAN_BANKS } from '@/data/nigerianBanks';
 
 const AgentWallet = () => {
@@ -291,11 +292,11 @@ const AgentWallet = () => {
       return;
     }
     if (amount < 100) {
-      toast({ variant: 'destructive', title: 'Invalid amount', description: 'Minimum withdrawal is ₦100' });
+      toast({ variant: 'destructive', title: 'Invalid amount', description: `Minimum withdrawal is ${formatPriceNgn(100)}` });
       return;
     }
     if (amount > walletBalance) {
-      toast({ variant: 'destructive', title: 'Insufficient balance', description: `You can only withdraw up to ₦${walletBalance.toLocaleString()}` });
+      toast({ variant: 'destructive', title: 'Insufficient balance', description: `You can only withdraw up to ${formatPriceNgn(walletBalance)}` });
       return;
     }
     // Store amount and open PIN dialog
@@ -373,7 +374,7 @@ const AgentWallet = () => {
     if (funded === 'true') {
       toast({
         title: 'Wallet funded successfully',
-        description: `₦${amount ? parseFloat(amount).toLocaleString() : ''} has been added to your virtual account.`,
+        description: `${amount ? formatPriceNgn(parseFloat(amount)) : ''} has been added to your virtual account.`,
       });
       queryClient.invalidateQueries({ queryKey: ['bank-account'] });
       setSearchParams({});
@@ -440,7 +441,7 @@ const AgentWallet = () => {
       <Navbar />
 
       <main className="flex-1 container mx-auto px-4 py-8">
-        <Link to="/dashboard">
+        <Link to={user?.role === 'agent' ? '/agent/dashboard' : '/landlord/dashboard'}>
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Dashboard
@@ -628,16 +629,16 @@ const AgentWallet = () => {
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground mb-1">Total Earnings</p>
                   <h2 className="text-4xl md:text-5xl font-bold text-primary">
-                    ₦{stats.totalEarnings?.toLocaleString() || 0}
+                    {formatPriceNgn(stats.totalEarnings ?? 0)}
                   </h2>
                   <p className="text-sm text-muted-foreground mt-2">
-                    All-time earnings from viewing fees
+                    All-time earnings from inspection fees
                   </p>
                 </div>
                 <div className="border-l pl-6">
                   <p className="text-sm text-muted-foreground mb-1">Wallet Balance</p>
                   <h3 className="text-2xl md:text-3xl font-bold">
-                    ₦{walletBalance.toLocaleString()}
+                    {formatPriceNgn(walletBalance)}
                   </h3>
                   <p className="text-sm text-muted-foreground mt-2">
                     Ready for withdrawal
@@ -670,7 +671,7 @@ const AgentWallet = () => {
                             className="text-base"
                           />
                           <p className="text-xs text-muted-foreground break-words">
-                            Minimum: ₦100
+                            Minimum: {formatPriceNgn(100)}
                           </p>
                         </div>
                         {bankAccountQuery.data?.virtualAccount && (
@@ -696,7 +697,7 @@ const AgentWallet = () => {
                           onClick={() => {
                             const amount = parseFloat(fundAmount);
                             if (isNaN(amount) || amount < 100) {
-                              toast({ variant: 'destructive', title: 'Invalid amount', description: 'Minimum funding amount is ₦100' });
+                              toast({ variant: 'destructive', title: 'Invalid amount', description: `Minimum funding amount is ${formatPriceNgn(100)}` });
                               return;
                             }
                             fundWalletMutation.mutate(amount);
@@ -746,7 +747,7 @@ const AgentWallet = () => {
                               className="text-base"
                             />
                             <p className="text-xs text-muted-foreground break-words">
-                              Available: ₦{walletBalance.toLocaleString()} | Minimum: ₦100
+                              Available: {formatPriceNgn(walletBalance)} | Minimum: {formatPriceNgn(100)}
                             </p>
                           </div>
                           {!pinStatusQuery.data?.hasPin && (
@@ -811,7 +812,7 @@ const AgentWallet = () => {
                 </div>
               </div>
               <div className="text-sm text-muted-foreground mb-4">
-                Total gross: ₦{(stats.totalGross || 0).toLocaleString()}
+                Total gross: {formatPriceNgn(stats.totalGross || 0)}
               </div>
               <div className="pt-4 border-t">
                 <Dialog open={isPinSettingsOpen} onOpenChange={setIsPinSettingsOpen}>
@@ -950,7 +951,7 @@ const AgentWallet = () => {
                 </div>
                 <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
                   <p className="text-xs text-blue-700 dark:text-blue-300">
-                    <strong>How it works:</strong> Payments from viewing fees are automatically deposited into this virtual account. 
+                    <strong>How it works:</strong> Payments from inspection fees are automatically deposited into this virtual account. 
                     You can withdraw funds from your wallet balance to your bank account anytime.
                   </p>
                 </div>
@@ -976,7 +977,7 @@ const AgentWallet = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Earnings History</CardTitle>
-                <CardDescription>All income from viewing fees and commissions</CardDescription>
+                <CardDescription>All income from inspection fees and commissions</CardDescription>
               </CardHeader>
               <CardContent>
                 {earningsQuery.isLoading ? (
@@ -988,7 +989,7 @@ const AgentWallet = () => {
                     <TrendingUp className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground">No earnings yet</p>
                     <p className="text-sm text-muted-foreground">
-                      Earnings will appear here when users pay viewing fees for your properties.
+                      Earnings will appear here when users pay inspection fees for your properties.
                     </p>
                   </div>
                 ) : (
@@ -1003,9 +1004,9 @@ const AgentWallet = () => {
                             <ArrowDownToLine className="h-4 w-4 text-green-600 dark:text-green-400" />
                           </div>
                           <div>
-                            <p className="font-medium">{earning.propertyTitle || 'Viewing Fee'}</p>
+                            <p className="font-medium">{earning.propertyTitle || 'Inspection Fee'}</p>
                             <p className="text-sm text-muted-foreground">
-                              {earning.clientName ? `From ${earning.clientName}` : earning.description || 'Viewing fee payment'}
+                              {earning.clientName ? `From ${earning.clientName}` : earning.description || 'Inspection fee payment'}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {format(new Date(earning.createdAt), 'PPP p')}
@@ -1014,10 +1015,10 @@ const AgentWallet = () => {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-green-600 dark:text-green-400">
-                            +₦{earning.amount?.toLocaleString()}
+                            +{earning.amount != null ? formatPriceNgn(earning.amount) : '—'}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Gross: ₦{earning.grossAmount?.toLocaleString()}
+                            Gross: {earning.grossAmount != null ? formatPriceNgn(earning.grossAmount) : '—'}
                           </p>
                         </div>
                       </div>
@@ -1069,7 +1070,7 @@ const AgentWallet = () => {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold">₦{withdrawal.amount?.toLocaleString()}</p>
+                          <p className="font-semibold">{withdrawal.amount != null ? formatPriceNgn(withdrawal.amount) : '—'}</p>
                           {getStatusBadge(withdrawal.status)}
                         </div>
                       </div>
@@ -1088,7 +1089,7 @@ const AgentWallet = () => {
           <DialogHeader>
             <DialogTitle>Enter Transaction PIN</DialogTitle>
             <DialogDescription>
-              Enter your 6-digit transaction PIN to confirm withdrawal of ₦{pendingWithdrawAmount?.toLocaleString()}
+              Enter your 6-digit transaction PIN to confirm withdrawal of {pendingWithdrawAmount != null ? formatPriceNgn(pendingWithdrawAmount) : '—'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2 sm:py-4">
@@ -1170,7 +1171,7 @@ const AgentWallet = () => {
           <DialogHeader>
             <DialogTitle>Enter Withdrawal OTP</DialogTitle>
             <DialogDescription>
-              Enter the 6-character OTP sent to your email to confirm withdrawal of ₦{pendingWithdrawAmount?.toLocaleString()}
+              Enter the 6-character OTP sent to your email to confirm withdrawal of {pendingWithdrawAmount != null ? formatPriceNgn(pendingWithdrawAmount) : '—'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2 sm:py-4">

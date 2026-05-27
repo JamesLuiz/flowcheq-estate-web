@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Home, Star } from 'lucide-react';
+import { ArrowRight, Home } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { VerificationBadge } from '@/components/VerificationBadge';
@@ -10,44 +9,15 @@ import { useAuth } from '@/context/AuthContext';
 
 export const FeaturedAgents = () => {
   const { isAuthenticated } = useAuth();
-  
+
   const agentsQuery = useQuery({
     queryKey: ['featured-agents'],
     queryFn: () => api.agents.list({ limit: 6, verified: true }),
-    // Only fetch when user is logged in
     enabled: isAuthenticated,
   });
 
   const agents = agentsQuery.data?.data ?? [];
-  const [agentCounts, setAgentCounts] = useState<Record<string, number>>({});
 
-  // Fetch property counts for each agent (uses houses.list pagination.total)
-  useEffect(() => {
-    let mounted = true;
-    const loadCounts = async () => {
-      if (!agents || agents.length === 0) return;
-      try {
-        const promises = agents.map((agent) =>
-          api.houses.list({ agentId: agent.id, limit: 1 }).then((res) => res.pagination?.total ?? res.data?.length ?? 0).catch(() => 0),
-        );
-        const results = await Promise.all(promises);
-        if (!mounted) return;
-        const map: Record<string, number> = {};
-        agents.forEach((a, idx) => {
-          map[a.id] = results[idx] ?? 0;
-        });
-        setAgentCounts(map);
-      } catch (e) {
-        // ignore
-      }
-    };
-    loadCounts();
-    return () => {
-      mounted = false;
-    };
-  }, [agents]);
-
-  // Only show section if user is logged in and there are agents
   if (!isAuthenticated || agents.length === 0) return null;
 
   return (
@@ -90,17 +60,15 @@ export const FeaturedAgents = () => {
                         <VerificationBadge verified={agent.verified} size="sm" />
                       </div>
                       {agent.bio && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {agent.bio}
-                        </p>
+                        <p className="text-sm text-muted-foreground line-clamp-2">{agent.bio}</p>
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <Home className="h-4 w-4" />
-                      <span>{agentCounts[agent.id] ?? agent.listings ?? 0} Properties</span>
+                      <span>{agent.listings ?? 0} Properties</span>
                     </div>
                     <Button
                       variant="ghost"

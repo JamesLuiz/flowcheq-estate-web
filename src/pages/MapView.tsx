@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { api } from '@/lib/api';
+import { formatPriceNgn } from '@/lib/format';
 import { House } from '@/types';
 import { Link } from 'react-router-dom';
 
@@ -30,13 +31,6 @@ const locationCoordinates: Record<string, { lat: number; lng: number }> = {
   'Kubwa, Abuja': { lat: 9.1346, lng: 7.3375 },
   'Lugbe, Abuja': { lat: 8.95, lng: 7.375 },
 };
-
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
-    minimumFractionDigits: 0,
-  }).format(price);
 
 const MapView = () => {
   const [selectedHouseId, setSelectedHouseId] = useState<string | null>(null);
@@ -236,7 +230,7 @@ const MapView = () => {
                         <span>{selectedHouse.location}</span>
                       </div>
                       <p className="text-2xl font-bold text-primary">
-                        {formatPrice(selectedHouse.price)}
+                        {formatPriceNgn(selectedHouse.price)}
                       </p>
                     </div>
 

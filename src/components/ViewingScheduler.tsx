@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { formatPriceNgn } from '@/lib/format';
 
 interface ViewingSchedule {
   id: string;
@@ -96,7 +97,7 @@ export const ViewingScheduler = ({ houseId, agentId, propertyTitle, viewingFee }
       phone?: string;
     }) => api.viewings.schedule(data),
     onSuccess: (response) => {
-      // If there's a viewing fee, show payment step
+      // If there's an inspection fee, show payment step
       if (viewingFee && viewingFee > 0) {
         setScheduledViewingId(response.id);
         setShowPaymentStep(true);
@@ -213,7 +214,7 @@ export const ViewingScheduler = ({ houseId, agentId, propertyTitle, viewingFee }
             {showPaymentStep ? (
               <>
                 <CreditCard className="h-5 w-5 text-primary" />
-                Pay Viewing Fee
+                Pay Inspection Fee
               </>
             ) : (
               <>
@@ -243,7 +244,7 @@ export const ViewingScheduler = ({ houseId, agentId, propertyTitle, viewingFee }
               </p>
               <div className="mt-4 pt-4 border-t border-primary/20">
                 <p className="text-lg font-bold text-primary">
-                  Viewing Fee: ₦{viewingFee?.toLocaleString()}
+                  Inspection Fee: {viewingFee != null ? formatPriceNgn(viewingFee) : '—'}
                 </p>
               </div>
             </div>
@@ -262,7 +263,7 @@ export const ViewingScheduler = ({ houseId, agentId, propertyTitle, viewingFee }
               ) : (
                 <>
                   <CreditCard className="mr-2 h-4 w-4" />
-                  Pay ₦{viewingFee?.toLocaleString()}
+                  Pay {viewingFee != null ? formatPriceNgn(viewingFee) : '—'}
                 </>
               )}
             </Button>
@@ -277,7 +278,7 @@ export const ViewingScheduler = ({ houseId, agentId, propertyTitle, viewingFee }
               <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-md border border-amber-200 dark:border-amber-800">
                 <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
                   <CreditCard className="h-4 w-4 inline mr-2" />
-                  This property requires a viewing fee of ₦{viewingFee.toLocaleString()}
+                  This property requires an inspection fee of {formatPriceNgn(viewingFee)}
                 </p>
                 <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
                   You will be prompted to pay after scheduling.
@@ -559,11 +560,11 @@ export const ViewingManagement = () => {
                       {viewing.viewingFee && viewing.viewingFee > 0 && (
                         <div className="p-2 bg-primary/10 rounded-md border border-primary/20">
                           <p className="text-sm font-semibold text-primary">
-                            Viewing Fee: ₦{viewing.viewingFee.toLocaleString()}
+                            Inspection Fee: {formatPriceNgn(viewing.viewingFee)}
                           </p>
                           {viewing.amountPaid && (
                             <p className="text-xs text-muted-foreground mt-1">
-                              Your share: ₦{viewing.agentAmount?.toLocaleString()} (Platform: {viewing.platformFee}%)
+                              Your share: {viewing.agentAmount != null ? formatPriceNgn(viewing.agentAmount) : '—'} (Platform: {viewing.platformFee}%)
                             </p>
                           )}
                         </div>
@@ -891,7 +892,7 @@ export const UserViewingManagement = () => {
                   {viewing.viewingFee && viewing.viewingFee > 0 && (
                     <div className="p-3 bg-primary/10 rounded-md border border-primary/20">
                       <p className="text-sm font-semibold text-primary">
-                        Viewing Fee: ₦{viewing.viewingFee.toLocaleString()}
+                        Inspection Fee: {formatPriceNgn(viewing.viewingFee)}
                       </p>
                       {viewing.paymentStatus && (
                         <Badge 

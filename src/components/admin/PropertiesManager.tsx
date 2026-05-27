@@ -24,6 +24,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
+import { formatPriceNgn } from '@/lib/format';
 import { House } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
@@ -137,14 +138,6 @@ export const PropertiesManager = () => {
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
-
   return (
     <>
       <Card>
@@ -214,7 +207,7 @@ export const PropertiesManager = () => {
                           <p className="text-xs text-muted-foreground">{property.agent?.email}</p>
                         </div>
                       </TableCell>
-                      <TableCell className="font-semibold">{formatPrice(property.price)}</TableCell>
+                      <TableCell className="font-semibold">{formatPriceNgn(property.price)}</TableCell>
                       <TableCell className="text-sm">{property.location}</TableCell>
                       <TableCell>
                         {(property as any).flagged ? (

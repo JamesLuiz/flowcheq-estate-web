@@ -19,7 +19,9 @@ const getApiBaseUrl = () => {
   
   // If in development and no explicit API URL is set, use localhost:3000
   if (isDevelopment && !import.meta.env.VITE_API_URL) {
-    console.log('🔧 Development mode: Using http://localhost:3000 for API');
+    if (import.meta.env.DEV) {
+      console.debug('[API] Development mode: http://localhost:3000');
+    }
     return 'http://localhost:3000';
   }
   
@@ -27,8 +29,8 @@ const getApiBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl) {
     const url = envUrl.replace(/\/$/, '');
-    if (isDevelopment) {
-      console.log(`🔧 Using custom API URL: ${url}`);
+    if (isDevelopment && import.meta.env.DEV) {
+      console.debug(`[API] Custom base URL: ${url}`);
     }
     return url;
   }
@@ -96,9 +98,9 @@ async function request<T>(
   const url = buildUrl(path, params);
   const token = getAuthToken();
 
-  // Debug logging in development
-  if (import.meta.env.DEV) {
-    console.log(`[API] ${method} ${url}`, { body, skipAuth });
+  const isAuthPath = path.includes('/auth/login') || path.includes('/auth/register');
+  if (import.meta.env.DEV && !isAuthPath) {
+    console.debug(`[API] ${method} ${url}`);
   }
 
   const response = await fetch(url, {
@@ -114,7 +116,7 @@ async function request<T>(
 
   if (!response.ok) {
     let errorMessage = response.statusText;
-    let errorDetails: any = null;
+    let errorDetails: { message?: string | string[] } | null = null;
     try {
       const errorBody = await response.json();
       errorDetails = errorBody;
@@ -247,14 +249,69 @@ const authApi = {
       body: payload,
       skipAuth: true,
     }),
+  verifyEmail: (token: string) =>
+    request<{ success: boolean; message: string }>(`/auth/verify-email?token=${encodeURIComponent(token)}`, 'GET', {
+      skipAuth: true,
+    }),
+  resendEmailVerification: () =>
+    request<{ success: boolean; message: string }>('/auth/resend-email-verification', 'POST'),
+};
+
+const propertyVerificationApi = {
+  getInspectionFee: () =>
+    request<{ amount: number; currency: string; label: string }>('/verification/inspection/fee', 'GET'),
+  payInspection: (propertyId: string) =>
+    request<{
+      amount: number;
+      paymentLink?: string;
+      txRef?: string;
+      alreadyPaid?: boolean;
+    }>('/verification/inspection/pay', 'POST', { body: { propertyId } }),
+  confirmInspection: (propertyId: string, transactionId: string) =>
+    request<{ success: boolean; inspectionFeePaid: boolean }>('/verification/inspection/confirm', 'POST', {
+      body: { propertyId, transactionId },
+    }),
+  requestFieldVerification: (propertyId: string) =>
+    request<{ success: boolean; status: string }>('/verification/request', 'POST', {
+      body: { propertyId },
+    }),
+  getPropertyVerificationStatus: (propertyId: string) =>
+    request<{
+      status: string;
+      inspectionFeePaid: boolean;
+      inspectionFeeAmount: number;
+    }>(`/verification/${propertyId}/status`, 'GET'),
 };
 
 async function requestWithFiles<T>(
   path: string,
   method: HttpMethod,
-  options: RequestOptions & { files?: File[]; proofOfAddressFile?: File; taggedPhotos?: File[]; taggedPhotoTags?: string[]; taggedPhotoDescriptions?: string[] } = {},
+  options: RequestOptions & {
+    files?: File[];
+    proofOfAddressFile?: File;
+    ownershipDocumentFiles?: File[];
+    ownershipDocTypes?: string[];
+    taggedPhotos?: File[];
+    taggedPhotoTags?: string[];
+    taggedPhotoDescriptions?: string[];
+    taggedPhotoGps?: Array<{ lat: number; lng: number; accuracy?: number; capturedAt?: string }>;
+  } = {},
 ): Promise<T> {
-  const { params, skipAuth, headers, body, files, proofOfAddressFile, taggedPhotos, taggedPhotoTags, taggedPhotoDescriptions, ...rest } = options;
+  const {
+    params,
+    skipAuth,
+    headers,
+    body,
+    files,
+    proofOfAddressFile,
+    ownershipDocumentFiles,
+    ownershipDocTypes,
+    taggedPhotos,
+    taggedPhotoTags,
+    taggedPhotoDescriptions,
+    taggedPhotoGps,
+    ...rest
+  } = options;
   const url = buildUrl(path, params);
   const token = getAuthToken();
 
@@ -272,6 +329,15 @@ async function requestWithFiles<T>(
     formData.append('proofOfAddress', proofOfAddressFile);
   }
 
+  if (ownershipDocumentFiles?.length) {
+    ownershipDocumentFiles.forEach((file) => {
+      formData.append('ownershipDocuments', file);
+    });
+    if (ownershipDocTypes?.length) {
+      formData.append('ownershipDocTypes', JSON.stringify(ownershipDocTypes));
+    }
+  }
+
   // Add tagged photos if provided
   if (taggedPhotos && taggedPhotos.length > 0) {
     taggedPhotos.forEach((file) => {
@@ -283,6 +349,9 @@ async function requestWithFiles<T>(
     }
     if (taggedPhotoDescriptions) {
       formData.append('taggedPhotoDescriptions', JSON.stringify(taggedPhotoDescriptions));
+    }
+    if (taggedPhotoGps?.length) {
+      formData.append('taggedPhotoGps', JSON.stringify(taggedPhotoGps));
     }
   }
 
@@ -379,24 +448,64 @@ const housesApi = {
     );
   },
   get: (id: string) => request<House>(`/houses/${id}`, 'GET'),
-  create: (payload: Omit<Partial<House>, 'images'> & { 
-    images?: File[] | string[]; 
+  create: (payload: {
+    title: string;
+    description: string;
+    price: number;
+    location: string;
+    type: string;
+    bedrooms?: number;
+    bathrooms?: number;
+    area?: number;
+    featured?: boolean;
+    coordinates?: { lat: number; lng: number };
+    isShared?: boolean;
+    totalSlots?: number;
+    listingType?: 'rent' | 'buy';
+    isAirbnb?: boolean;
+    viewingFee?: number;
+    images?: File[] | string[];
     proofOfAddress?: File | null;
-    taggedPhotos?: Array<{ file?: File; url?: string; tag: string; description?: string }>;
+    ownershipDocuments?: Array<{ type: string; file: File }>;
+    taggedPhotos?: Array<{
+      file: File;
+      tag: string;
+      description?: string;
+      lat?: number;
+      lng?: number;
+      accuracy?: number;
+    }>;
   }) => {
-    const { images, proofOfAddress, taggedPhotos, ...restPayload } = payload;
+    const { images, proofOfAddress, ownershipDocuments, taggedPhotos, ...restPayload } = payload;
     const files = images as File[] | undefined;
     const proofFile = proofOfAddress as File | undefined;
-    
-    // Extract tagged photo files, tags, and descriptions (only include items with file property)
-    const photosWithFiles = taggedPhotos?.filter(p => 'file' in p && (p as any).file) ?? [];
-    const taggedPhotoFiles = photosWithFiles.map(p => (p as any).file as File);
-    const taggedPhotoTags = photosWithFiles.map(p => p.tag);
-    const taggedPhotoDescriptions = photosWithFiles.map(p => p.description);
-    
+    const ownershipDocumentFiles = ownershipDocuments?.map((d) => d.file);
+    const ownershipDocTypes = ownershipDocuments?.map((d) => d.type);
+
+    type TaggedPhotoWithFile = {
+      file: File;
+      tag: string;
+      description?: string;
+      lat?: number;
+      lng?: number;
+      accuracy?: number;
+    };
+    const photosWithFiles =
+      taggedPhotos?.filter((p): p is TaggedPhotoWithFile => p.file instanceof File) ?? [];
+    const taggedPhotoFiles = photosWithFiles.map((p) => p.file);
+    const taggedPhotoTags = photosWithFiles.map((p) => p.tag);
+    const taggedPhotoDescriptions = photosWithFiles.map((p) => p.description);
+    const taggedPhotoGps = photosWithFiles.map((p) => ({
+      lat: p.lat!,
+      lng: p.lng!,
+      accuracy: p.accuracy,
+      capturedAt: new Date().toISOString(),
+    }));
+
     const shouldUseMultipart =
       (files && files.length > 0) ||
       !!proofFile ||
+      (ownershipDocumentFiles && ownershipDocumentFiles.length > 0) ||
       (taggedPhotoFiles && taggedPhotoFiles.length > 0);
 
     if (shouldUseMultipart) {
@@ -404,9 +513,12 @@ const housesApi = {
         body: restPayload,
         files,
         proofOfAddressFile: proofFile,
+        ownershipDocumentFiles,
+        ownershipDocTypes,
         taggedPhotos: taggedPhotoFiles,
         taggedPhotoTags,
         taggedPhotoDescriptions,
+        taggedPhotoGps: taggedPhotoGps.every((g) => g.lat != null) ? taggedPhotoGps : undefined,
       });
     }
 
@@ -414,6 +526,35 @@ const housesApi = {
   },
   update: (id: string, payload: Partial<House>) =>
     request<House>(`/houses/${id}`, 'PUT', { body: payload }),
+  uploadGpsCapture: (
+    id: string,
+    photos: Array<{
+      file: File;
+      tag: string;
+      description?: string;
+      lat: number;
+      lng: number;
+      accuracy?: number;
+      capturedAt?: string;
+    }>,
+  ) => {
+    const taggedPhotoFiles = photos.map((p) => p.file);
+    const taggedPhotoTags = photos.map((p) => p.tag);
+    const taggedPhotoDescriptions = photos.map((p) => p.description ?? '');
+    const taggedPhotoGps = photos.map((p) => ({
+      lat: p.lat,
+      lng: p.lng,
+      accuracy: p.accuracy,
+      capturedAt: p.capturedAt ?? new Date().toISOString(),
+    }));
+    return requestWithFiles<House>(`/houses/${id}/photos/gps-capture`, 'POST', {
+      body: {},
+      taggedPhotos: taggedPhotoFiles as File[],
+      taggedPhotoTags,
+      taggedPhotoDescriptions,
+      taggedPhotoGps,
+    });
+  },
   delete: (id: string) => request<void>(`/houses/${id}`, 'DELETE'),
   trackView: (id: string) => request<{ success: boolean }>(`/houses/${id}/view`, 'POST'),
   trackWhatsAppClick: (id: string) =>
@@ -587,7 +728,7 @@ const adminApi = {
   cancelPromotion: (id: string) => request<any>(`/admin/promotions/${id}`, 'DELETE'),
   sendVerificationReminder: (agentId: string) => 
     request<{ success: boolean; message: string }>(`/admin/send-verification-reminder/${agentId}`, 'POST'),
-  // Viewing fees management
+  // Inspection fees management
   getAllViewingFees: () => request<any[]>('/admin/viewing-fees', 'GET'),
   getPlatformFeePercentage: () => request<{ platformFeePercentage: number }>('/admin/viewing-fees/platform-fee-percentage', 'GET'),
   updatePlatformFeePercentage: (percentage: number) =>
@@ -762,6 +903,73 @@ const viewingsApi = {
     request<any>('/viewings/payment/verify', 'POST', { body: { tx_ref: txRef } }),
 };
 
+const locationVerificationApi = {
+  verifyPhoto: async (
+    file: File,
+    options: {
+      propertyId?: string;
+      expectedAddress?: string;
+      expectedLat?: number;
+      expectedLng?: number;
+      radiusMeters?: number;
+    },
+  ) => {
+    const form = new FormData();
+    form.append('photo', file);
+    if (options.propertyId) form.append('propertyId', options.propertyId);
+    if (options.expectedAddress) form.append('expectedAddress', options.expectedAddress);
+    if (options.expectedLat != null) form.append('expectedLat', String(options.expectedLat));
+    if (options.expectedLng != null) form.append('expectedLng', String(options.expectedLng));
+    if (options.radiusMeters != null) form.append('radiusMeters', String(options.radiusMeters));
+
+    const token = getAuthToken();
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}/verification/location/verify-photo`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Location verification failed');
+    }
+    return response.json();
+  },
+};
+
+const propertyManagementApi = {
+  createManagementRequest: (propertyId: string, message?: string) =>
+    request<{ _id: string; status: string }>('/management-requests', 'POST', {
+      body: { propertyId, message },
+    }),
+  listOutgoingRequests: () =>
+    request<any[]>('/management-requests/outgoing', 'GET'),
+  listIncomingRequests: () =>
+    request<any[]>('/management-requests/incoming', 'GET'),
+  updateManagementRequest: (
+    id: string,
+    body: { status: 'accepted' | 'rejected' | 'revoked'; responseNote?: string },
+  ) => request<any>(`/management-requests/${id}`, 'PATCH', { body }),
+  listManagedProperties: () =>
+    request<{ managementRequestId: string; property: any; acceptedAt: string }[]>(
+      '/agent/managed-properties',
+      'GET',
+    ),
+  listAgentLeads: () => request<any[]>('/agent/leads', 'GET'),
+  listLandlordLeads: () => request<any[]>('/landlord/leads', 'GET'),
+  updateLead: (id: string, status: 'new' | 'contacted' | 'interested' | 'closed') =>
+    request<any>(`/agent/leads/${id}`, 'PATCH', { body: { status } }),
+  verifyLocation: (
+    propertyId: string,
+    body: { lat: number; lng: number; accuracy?: number; notes?: string },
+  ) =>
+    request<{ success: boolean; distanceMeters: number; verified: boolean }>(
+      `/properties/${propertyId}/location-verify`,
+      'POST',
+      { body },
+    ),
+};
+
 const messagesApi = {
   send: (data: { receiverId: string; content: string; houseId?: string; conversationType?: 'tenant-agent' | 'co-tenant' }) =>
     request<any>('/messages', 'POST', { body: data }),
@@ -782,6 +990,9 @@ export const api = {
   reviews: reviewsApi,
   alerts: alertsApi,
   verifications: verificationsApi,
+  propertyVerification: propertyVerificationApi,
+  propertyManagement: propertyManagementApi,
+  locationVerification: locationVerificationApi,
   admin: adminApi,
   promotions: promotionsApi,
   viewings: viewingsApi,

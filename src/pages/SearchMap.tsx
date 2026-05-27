@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, MapPin, Navigation } from 'lucide-react';
 import { api } from '@/lib/api';
+import { formatPriceNgn } from '@/lib/format';
 import { House } from '@/types';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -40,14 +41,6 @@ const SearchMap = () => {
     }
   }, [searchParams, houses]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
-
   // Default to Abuja, Nigeria if no houses with coordinates
   const defaultLat = 9.0765;
   const defaultLng = 7.3986;
@@ -69,7 +62,7 @@ const SearchMap = () => {
     .map(house => ({
       lat: house.coordinates!.lat,
       lng: house.coordinates!.lng,
-      label: `${house.title} - ${formatPrice(house.price)}`,
+      label: `${house.title} - ${formatPriceNgn(house.price)}`,
       id: house.id,
       house: house,
     }));
@@ -168,7 +161,7 @@ const SearchMap = () => {
                     <h3 className="font-semibold text-lg mb-2">{selectedHouse.title}</h3>
                     <p className="text-sm text-muted-foreground mb-2">{selectedHouse.location}</p>
                     <p className="text-xl font-bold text-primary mb-4">
-                      {formatPrice(selectedHouse.price)}
+                      {formatPriceNgn(selectedHouse.price)}
                     </p>
                     {selectedHouse.bedrooms && (
                       <p className="text-sm text-muted-foreground mb-1">
@@ -220,7 +213,7 @@ const SearchMap = () => {
                           <p className="font-medium text-sm">{house.title}</p>
                           <p className="text-xs text-muted-foreground">{house.location}</p>
                           <p className="text-sm font-semibold text-primary mt-1">
-                            {formatPrice(house.price)}
+                            {formatPriceNgn(house.price)}
                           </p>
                         </div>
                       ))}

@@ -12,6 +12,7 @@ export interface Agent {
   bio?: string;
   role?: string;
   listings?: number;
+  emailVerified?: boolean;
   verified?: boolean;
   verificationStatus?: string;
   verificationDate?: string;
@@ -42,14 +43,18 @@ export interface House {
   totalSlots?: number;
   availableSlots?: number;
   bookedByUsers?: string[];
-  // Viewing fee
+  // Inspection fee
   viewingFee?: number;
   // Listing type
   listingType?: 'rent' | 'buy';
   // Airbnb listing
   isAirbnb?: boolean;
-  // Proof of address
   proofOfAddress?: string;
+  ownershipDocuments?: Array<{ type: string; url: string }>;
+  inspectionFeePaid?: boolean;
+  inspectionFeeAmount?: number;
+  verificationStatus?: string;
+  gpsVerifiedPhotos?: boolean;
   // Address verification status
   addressVerified?: boolean;
   // Tagged photos with room types
@@ -57,6 +62,9 @@ export interface House {
     url: string;
     tag: string;
     description?: string;
+    lat?: number;
+    lng?: number;
+    gpsVerified?: boolean;
   }>;
 }
 

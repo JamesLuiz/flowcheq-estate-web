@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ['mapbox-gl'],
+    include: ['@react-google-maps/api'],
   },
   define: {
     'process.env': {},

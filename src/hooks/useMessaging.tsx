@@ -117,12 +117,12 @@ export const useMessaging = () => {
 
       pusher.connection.bind('connected', () => {
         setIsConnected(true);
-        console.log('Pusher connected');
+        if (import.meta.env.DEV) console.debug('Pusher connected');
       });
 
       pusher.connection.bind('disconnected', () => {
         setIsConnected(false);
-        console.log('Pusher disconnected');
+        if (import.meta.env.DEV) console.debug('Pusher disconnected');
       });
 
       pusherRef.current = pusher;
@@ -134,7 +134,7 @@ export const useMessaging = () => {
       };
     } else {
       // Fallback to polling (less frequent to reduce server load)
-      console.log('Pusher not configured, using polling');
+      if (import.meta.env.DEV) console.debug('Pusher not configured, using polling');
       
       const poll = () => {
         fetchConversations();

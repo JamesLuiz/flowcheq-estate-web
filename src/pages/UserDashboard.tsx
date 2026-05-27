@@ -15,6 +15,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { UserViewingManagement } from '@/components/ViewingScheduler';
+import { formatPriceNgn } from '@/lib/format';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -177,12 +178,12 @@ const UserDashboard = () => {
                             <div className="flex flex-wrap gap-2 text-sm">
                               {alert.minPrice && (
                                 <span className="bg-background px-2 py-1 rounded">
-                                  Min ₦{alert.minPrice.toLocaleString()}
+                                  Min {formatPriceNgn(alert.minPrice)}
                                 </span>
                               )}
                               {alert.maxPrice && (
                                 <span className="bg-background px-2 py-1 rounded">
-                                  Max ₦{alert.maxPrice.toLocaleString()}
+                                  Max {formatPriceNgn(alert.maxPrice)}
                                 </span>
                               )}
                               {alert.location && (

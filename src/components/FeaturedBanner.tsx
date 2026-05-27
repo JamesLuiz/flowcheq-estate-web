@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Loader2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
+import { formatPriceNgn } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 interface Promotion {
@@ -137,7 +138,7 @@ export const FeaturedBanner = () => {
           </p>
           <div className="flex items-center gap-4 mb-6">
             <span className="text-2xl md:text-3xl font-bold">
-              ₦{currentPromotion.house.price.toLocaleString()}
+              {formatPriceNgn(currentPromotion.house.price)}
             </span>
           </div>
           <Button

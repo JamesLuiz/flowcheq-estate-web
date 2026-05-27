@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { Loader2 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
 import Index from "./pages/Index";
 import HouseDetails from "./pages/HouseDetails";
@@ -14,13 +15,16 @@ import AgentsListing from "./pages/AgentsListing";
 import AgentGuide from "./pages/AgentGuide";
 import SharedProperties from "./pages/SharedProperties";
 import Messages from "./pages/Messages";
-import Admin from "./pages/Admin";
 import Dashboard from "./pages/Dashboard";
 import UserDashboard from "./pages/UserDashboard";
+import WalletRedirect from "./pages/WalletRedirect";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { LISTING_OWNER_ROLES, AGENT_ROLES, ADMIN_ROLES } from "./lib/roles";
 import PropertyComparison from "./pages/PropertyComparison";
 import MapView from "./pages/MapView";
 import SearchMap from "./pages/SearchMap";
 import Auth from "./pages/Auth";
+import VerifyEmail from "./pages/VerifyEmail";
 import CompanyAuth from "./pages/CompanyAuth";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -33,22 +37,20 @@ import AgentWallet from "./pages/AgentWallet";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
 
+const Admin = lazy(() => import("./pages/Admin"));
+const LandlordDashboard = lazy(() => import("./pages/LandlordDashboard"));
+const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
+
+const PageLoader = () => (
+  <div className="min-h-[50vh] flex items-center justify-center">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
+
 const queryClient = new QueryClient();
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    // Wait for document to be fully loaded
-    if (document.readyState === 'complete') {
-      setIsLoaded(true);
-    } else {
-      const handleLoad = () => setIsLoaded(true);
-      window.addEventListener('load', handleLoad);
-      return () => window.removeEventListener('load', handleLoad);
-    }
-  }, []);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
@@ -57,7 +59,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        {isLoaded && showSplash && (
+        {showSplash && (
           <SplashScreen onComplete={handleSplashComplete} minimumDisplayTime={2500} />
         )}
         <AuthProvider>
@@ -65,6 +67,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/house/:id" element={<HouseDetails />} />
@@ -75,15 +78,55 @@ const App = () => {
               <Route path="/agent-guide" element={<AgentGuide />} />
               <Route path="/shared-properties" element={<SharedProperties />} />
               <Route path="/messages" element={<Messages />} />
-              <Route path="/admin" element={<Admin />} />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute roles={ADMIN_ROLES}>
+                    <Admin />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/wallet" element={<AgentWallet />} />
+              <Route
+                path="/landlord/dashboard"
+                element={
+                  <ProtectedRoute roles={LISTING_OWNER_ROLES}>
+                    <LandlordDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/agent/dashboard"
+                element={
+                  <ProtectedRoute roles={AGENT_ROLES}>
+                    <AgentDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/wallet" element={<WalletRedirect />} />
+              <Route
+                path="/landlord/wallet"
+                element={
+                  <ProtectedRoute roles={LISTING_OWNER_ROLES}>
+                    <AgentWallet />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/agent/wallet"
+                element={
+                  <ProtectedRoute roles={AGENT_ROLES}>
+                    <AgentWallet />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/user-dashboard" element={<UserDashboard />} />
               <Route path="/profile/edit" element={<ProfileEdit />} />
               <Route path="/compare" element={<PropertyComparison />} />
               <Route path="/map" element={<MapView />} />
               <Route path="/search-map" element={<SearchMap />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/verify-email" element={<VerifyEmail />} />
               <Route path="/auth/company" element={<CompanyAuth />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
@@ -91,9 +134,9 @@ const App = () => {
               <Route path="/promotions/setup" element={<PromotionSetup />} />
               <Route path="/promotions/callback" element={<PromotionCallback />} />
               <Route path="/viewings/payment/callback" element={<ViewingPaymentCallback />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
           </BrowserRouter>
         </TooltipProvider>
         </AuthProvider>

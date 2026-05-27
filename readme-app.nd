@@ -1,0 +1,97 @@
+# Deploying `apps/mobile` (Expo)
+
+This guide covers how to run and deploy the mobile app in `apps/mobile`.
+
+## 1) Prerequisites
+
+- Node.js 18+ and Yarn
+- Expo account (`npx expo login`)
+- Backend API running and reachable from device
+
+## 2) Install dependencies
+
+```bash
+cd apps/mobile
+yarn install
+```
+
+## 3) Configure environment
+
+Create `apps/mobile/.env`:
+
+```env
+EXPO_PUBLIC_API_URL=http://<YOUR_BACKEND_HOST>:3000
+EXPO_PUBLIC_AUTH_TOKEN=<optional-dev-token>
+```
+
+Notes:
+- Use your PC LAN IP (not `localhost`) when testing on a physical phone.
+- Auth token is read from secure store first (`src/lib/authToken.ts`).
+
+## 4) Run in development
+
+```bash
+cd apps/mobile
+yarn start --lan
+```
+
+- Open Expo Go on your Android phone and scan the QR code.
+- If LAN fails, use:
+
+```bash
+yarn start --tunnel
+```
+
+## 5) Production deployment with EAS Build (recommended)
+
+From `apps/mobile`:
+
+```bash
+npx expo login
+npx eas login
+npx eas build:configure
+```
+
+Build Android AAB/APK:
+
+```bash
+npx eas build -p android --profile production
+```
+
+Build iOS:
+
+```bash
+npx eas build -p ios --profile production
+```
+
+After build completes, EAS provides install/download links.
+
+## 6) Store submission
+
+Android (Play Store):
+
+```bash
+npx eas submit -p android
+```
+
+iOS (App Store Connect):
+
+```bash
+npx eas submit -p ios
+```
+
+## 7) Important app config already present
+
+In `apps/mobile/app.json`:
+- Android package: `com.nestin.estate`
+- iOS bundle id: `com.nestin.estate`
+- Camera and location permissions enabled
+- Router scheme: `nestin`
+
+## 8) Pre-release checklist
+
+- Backend is reachable from app (`EXPO_PUBLIC_API_URL` correct)
+- Login works and token storage works
+- Nestin Capture upload works: `/nestin-capture?propertyId=<HOUSE_ID>`
+- API docs reachable from same network: `http://<backend-host>:3000/api/docs`
+

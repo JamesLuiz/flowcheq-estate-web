@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import { formatPriceNgn } from '@/lib/format';
 
 const PRICE_PER_DAY = 10000; // ₦10,000 per day
 
@@ -272,11 +273,11 @@ const PromotionSetup = () => {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-sm md:text-base">
-                        ₦{calculatePrice(pkg.days).toLocaleString()}
+                        {formatPriceNgn(calculatePrice(pkg.days))}
                       </p>
                       {pkg.discount > 0 && (
                         <p className="text-xs text-muted-foreground line-through">
-                          ₦{(pkg.days * PRICE_PER_DAY).toLocaleString()}
+                          {formatPriceNgn(pkg.days * PRICE_PER_DAY)}
                         </p>
                       )}
                     </div>
@@ -292,7 +293,7 @@ const PromotionSetup = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground text-sm md:text-base">Total:</span>
                   <span className="text-xl md:text-2xl font-bold text-primary">
-                    ₦{calculatePrice(selectedDays).toLocaleString()}
+                    {formatPriceNgn(calculatePrice(selectedDays))}
                   </span>
                 </div>
               </div>

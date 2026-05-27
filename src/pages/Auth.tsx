@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import { getDashboardPathForRole } from '@/lib/roles';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ const Auth = () => {
         title: 'Welcome back!',
         description: 'You have successfully logged in.',
       });
-      navigate(user.role === 'agent' || user.role === 'landlord' ? '/dashboard' : '/user-dashboard');
+      navigate(getDashboardPathForRole(user.role));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Login failed';
       toast({
@@ -91,7 +92,7 @@ const Auth = () => {
         title: 'Account created!',
         description: `Your ${signupForm.role} account has been created successfully.`,
       });
-      navigate(user.role === 'agent' || user.role === 'landlord' ? '/dashboard' : '/user-dashboard');
+      navigate(getDashboardPathForRole(user.role));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to register';
       toast({
