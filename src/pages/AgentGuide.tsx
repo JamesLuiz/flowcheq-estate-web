@@ -15,8 +15,17 @@ import {
   FileText,
   Phone
 } from 'lucide-react';
+import { useSeo } from '@/lib/seo';
 
 const AgentGuide = () => {
+  useSeo({
+    title: 'Agent & Landlord Guide — How Flowcheq Estate Works',
+    description:
+      'Learn how to manage and market your properties on Flowcheq Estate. A complete guide for agents and landlords on listings, verification, inspections and growing your real estate business in Abuja.',
+    url: '/agent-guide',
+    keywords:
+      'real estate agent guide Nigeria, how to list property Abuja, landlord guide Abuja, property management Nigeria',
+  });
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

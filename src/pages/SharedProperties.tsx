@@ -20,8 +20,17 @@ import { api } from '@/lib/api';
 import { House } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSeo } from '@/lib/seo';
 
 const SharedProperties = () => {
+  useSeo({
+    title: 'Shared Living & Co-Tenancy Properties in Abuja',
+    description:
+      'Split rent and share a home in Abuja with Flowcheq Estate shared listings. Find verified shared apartments and co-tenancy spaces with trusted housemates and secure inspections.',
+    url: '/shared-properties',
+    keywords:
+      'shared apartments Abuja, co-tenancy Abuja, roommate Abuja, split rent Abuja, shared living Nigeria, flatmate Abuja',
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [priceFilter, setPriceFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('');

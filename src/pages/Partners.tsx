@@ -17,10 +17,19 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { NIGERIAN_STATES } from '@/data/nigerianStates';
 import { api } from '@/lib/api';
+import { useSeo } from '@/lib/seo';
 import { useToast } from '@/hooks/use-toast';
 
 const Partners = () => {
   const { toast } = useToast();
+  useSeo({
+    title: 'List Your Property — Become a Flowcheq Estate Partner',
+    description:
+      'Are you a landlord in Abuja? Partner with Flowcheq Estate to list your verified property and reach serious tenants. We verify ownership, capture on-site photos and connect you with trusted agents.',
+    url: '/partners',
+    keywords:
+      'list property Abuja, landlord onboarding Nigeria, rent out property Abuja, advertise property Nigeria, property listing partner, real estate partner Abuja',
+  });
   const [form, setForm] = useState({
     name: '',
     email: '',

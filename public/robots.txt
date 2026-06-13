@@ -10,5 +10,17 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /messages
+
+Host: https://estate.flowcheq.com
+Sitemap: https://estate.flowcheq.com/sitemap.xml

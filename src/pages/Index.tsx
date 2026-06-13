@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, BellRing, Loader2, RotateCcw } from 'lucide-react';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { api } from '@/lib/api';
+import { useSeo } from '@/lib/seo';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import heroImage from '@/assets/hero-abuja.jpg';
@@ -25,6 +26,15 @@ const Index = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useSeo({
+    title: 'Verified Houses & Apartments for Rent in Abuja, Nigeria',
+    description:
+      "Find your dream home in Abuja with Flowcheq Estate. Browse verified houses, apartments, duplexes and serviced flats for rent and sale, with trusted agents, GPS-verified listings and secure inspections.",
+    url: '/',
+    keywords:
+      'houses for rent in Abuja, apartments for rent Abuja, houses for sale Abuja, verified property listings Nigeria, real estate Abuja, duplex for rent Abuja, serviced apartments Abuja, FCT properties',
+  });
 
   // Get user location
   useEffect(() => {

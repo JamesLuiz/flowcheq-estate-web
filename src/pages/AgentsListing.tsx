@@ -9,9 +9,18 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { VerificationBadge } from '@/components/VerificationBadge';
 import { api } from '@/lib/api';
+import { useSeo } from '@/lib/seo';
 
 const AgentsListing = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  useSeo({
+    title: 'Verified Real Estate Agents in Abuja, Nigeria',
+    description:
+      'Browse trusted, verified real estate agents in Abuja on Flowcheq Estate. Connect with professionals who can help you rent, buy or list property with confidence.',
+    url: '/agents',
+    keywords:
+      'real estate agents Abuja, verified property agents Nigeria, trusted estate agents Abuja, realtors Abuja',
+  });
 
   const agentsQuery = useQuery({
     queryKey: ['all-agents'],

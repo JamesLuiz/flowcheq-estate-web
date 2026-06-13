@@ -28,6 +28,7 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import { useSeo } from '@/lib/seo';
 import { usePropertyViewTracker } from '@/hooks/usePropertyViewTracker';
 import { AgentRequestManage } from '@/components/agent/AgentRequestManage';
 import { isAgentRole } from '@/lib/roles';
@@ -69,6 +70,26 @@ const HouseDetails = () => {
   const house = houseQuery.data;
   const agent = house?.agent;
   const isHouseFavorite = house ? isFavorite(house.id) : false;
+
+  const listingVerb = house?.listingType === 'buy' ? 'for Sale' : 'for Rent';
+  useSeo({
+    title: house
+      ? `${house.title} — ${house.location} | ${formatPriceNgn(house.price)}`
+      : 'Property Details',
+    description: house
+      ? `${house.title} ${listingVerb} in ${house.location}, Abuja. ${
+          house.bedrooms ? `${house.bedrooms} bed` : ''
+        }${house.bathrooms ? `, ${house.bathrooms} bath` : ''} — ${formatPriceNgn(
+          house.price,
+        )}. ${(house.description || '').slice(0, 120)}`.trim()
+      : 'View verified property details, photos and location on Flowcheq Estate.',
+    url: id ? `/house/${id}` : undefined,
+    image: house?.images?.[0],
+    type: 'product',
+    keywords: house
+      ? `${house.type} ${listingVerb} ${house.location}, ${house.title}, property ${house.location} Abuja, ${house.bedrooms ?? ''} bedroom ${house.type} Abuja`
+      : undefined,
+  });
 
   const isOwner = Boolean(user?.id && (user.id === house?.agentId || user.id === agent?.id));
 

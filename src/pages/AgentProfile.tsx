@@ -12,6 +12,7 @@ import { VerificationBadge } from '@/components/VerificationBadge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import { useSeo } from '@/lib/seo';
 
 const AgentProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +39,16 @@ const AgentProfile = () => {
   const reviews = reviewsQuery.data?.reviews ?? [];
   const averageRating = reviewsQuery.data?.averageRating ?? 0;
   const totalReviews = reviewsQuery.data?.totalReviews ?? 0;
+
+  useSeo({
+    title: agent ? `${agent.name} — Verified Agent on Flowcheq Estate` : 'Agent Profile',
+    description: agent
+      ? `${agent.name} is a verified real estate agent on Flowcheq Estate with ${listings.length} listing(s) in Abuja. ${(agent.bio || '').slice(0, 140)}`.trim()
+      : 'View verified real estate agent profiles, listings and reviews on Flowcheq Estate.',
+    url: id ? `/agents/${id}` : undefined,
+    image: agent?.avatarUrl,
+    type: 'profile',
+  });
 
   const createReviewMutation = useMutation({
     mutationFn: () => api.reviews.create(id as string, { rating, comment }),

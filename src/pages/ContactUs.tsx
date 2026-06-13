@@ -10,11 +10,19 @@ import { useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import emailjs from '@emailjs/browser';
+import { useSeo } from '@/lib/seo';
 
 const ContactUs = () => {
   const form = useRef<HTMLFormElement>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { toast } = useToast();
+  useSeo({
+    title: 'Contact Us',
+    description:
+      'Get in touch with Flowcheq Estate. Questions about renting, buying or listing property in Abuja? Our team is here to help you flow, check and find your next home.',
+    url: '/contact',
+    keywords: 'contact Flowcheq Estate, real estate support Abuja, property enquiries Nigeria',
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
