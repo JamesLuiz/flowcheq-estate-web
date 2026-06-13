@@ -24,6 +24,7 @@ import { LandlordBankSection } from '@/components/landlord/LandlordBankSection';
 import { LandlordCreateListingDialog } from '@/components/landlord/LandlordCreateListingDialog';
 import { LandlordEditListingDialog } from '@/components/landlord/LandlordEditListingDialog';
 import { LandlordPinResetDialog } from '@/components/landlord/LandlordPinResetDialog';
+import { YouverifyAccountCard } from '@/components/YouverifyAccountCard';
 
 const initialFormState = initialLandlordListingFormState;
 
@@ -178,6 +179,7 @@ const LandlordDashboard = () => {
         totalSlots: formState.isShared ? Number(formState.totalSlots) : undefined,
         listingType: formState.listingType,
         isAirbnb: formState.isAirbnb,
+        amenities: formState.amenities,
         ownershipDocuments,
         taggedPhotos: taggedPhotosPayload,
       } as any);
@@ -330,7 +332,7 @@ const LandlordDashboard = () => {
       toast({
         variant: 'destructive',
         title: 'GPS property photos',
-        description: `Add ${GPS_PHOTO_MIN}Ã¢â‚¬â€œ${GPS_PHOTO_MAX} tagged photos with GPS metadata (use Nestin Capture on mobile when available).`,
+        description: `Add ${GPS_PHOTO_MIN}Ã¢â‚¬â€œ${GPS_PHOTO_MAX} tagged photos with GPS metadata (use Flowcheq Capture on mobile when available).`,
       });
       return;
     }
@@ -432,6 +434,10 @@ const LandlordDashboard = () => {
           totalViews={stats.totalViews}
           inquiries={stats.inquiries}
         />
+
+        <div className="mb-6">
+          <YouverifyAccountCard />
+        </div>
 
         {/* Verification Dialog */}
         <div className="mb-8">

@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.env
+.env.*
+*.log
+backend
+apps
+packages
+coverage
+AUDIT_REPORT.md
+FRONTEND_ARCHITECTURE.md

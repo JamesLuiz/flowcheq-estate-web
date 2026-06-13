@@ -37,6 +37,7 @@ import { UnverifiedAgentsManager } from '@/components/admin/UnverifiedAgentsMana
 import { AgentsManager } from '@/components/admin/AgentsManager';
 import { PropertiesManager } from '@/components/admin/PropertiesManager';
 import { DisbursementsManager } from '@/components/admin/DisbursementsManager';
+import { PartnerLeadsManager } from '@/components/admin/PartnerLeadsManager';
 import { Input } from '@/components/ui/input';
 
 interface Verification {
@@ -452,7 +453,7 @@ const Admin = () => {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6 max-w-5xl">
+          <TabsList className="grid w-full grid-cols-7 max-w-6xl">
             <TabsTrigger value="verifications" className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Verifications</span>
@@ -487,6 +488,11 @@ const Admin = () => {
               <Home className="h-4 w-4" />
               <span className="hidden sm:inline">Properties</span>
               <span className="sm:hidden">Props</span>
+            </TabsTrigger>
+            <TabsTrigger value="partners" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              <span className="hidden sm:inline">Partner leads</span>
+              <span className="sm:hidden">Leads</span>
             </TabsTrigger>
           </TabsList>
 
@@ -970,6 +976,10 @@ const Admin = () => {
           {/* Properties Tab */}
           <TabsContent value="properties" className="space-y-4">
             <PropertiesManager />
+          </TabsContent>
+
+          <TabsContent value="partners" className="space-y-4">
+            <PartnerLeadsManager />
           </TabsContent>
         </Tabs>
       </div>

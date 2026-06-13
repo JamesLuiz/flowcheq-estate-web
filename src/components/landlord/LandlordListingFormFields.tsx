@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/command';
 import { NIGERIAN_STATES } from '@/data/nigerianStates';
 import type { LandlordListingFormState } from './landlordListingFormState';
+import { AmenitiesPicker } from '@/components/landlord/AmenitiesPicker';
 
 type LandlordListingFormFieldsProps = {
   idPrefix?: string;
@@ -246,6 +247,12 @@ export function LandlordListingFormFields({
           />
         </div>
       </div>
+
+      <AmenitiesPicker
+        idPrefix={p('')}
+        value={formState.amenities}
+        onChange={(amenities) => setFormState((prev) => ({ ...prev, amenities }))}
+      />
 
       <div className="space-y-2 p-4 border rounded-lg bg-muted/50">
         <Label htmlFor={p('viewingFee')}>Inspection Fee (₦)</Label>

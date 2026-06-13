@@ -10,6 +10,8 @@ import {
   SelectValue,
 } from './ui/select';
 import { FilterParams } from '@/types';
+import { PROPERTY_AMENITIES } from '@/lib/amenities';
+import { Checkbox } from './ui/checkbox';
 
 interface SearchFiltersProps {
   onFilterChange: (filters: FilterParams) => void;
@@ -21,8 +23,17 @@ export const SearchFilters = ({ onFilterChange }: SearchFiltersProps) => {
 
   const handleFilterChange = (
     key: keyof FilterParams,
-    value: string | number | undefined,
+    value: string | number | string[] | undefined,
   ) => {
+    if (Array.isArray(value)) {
+      const nextFilters: FilterParams = { ...filters };
+      if (value.length === 0) delete nextFilters[key];
+      else nextFilters[key] = value as never;
+      setFilters(nextFilters);
+      onFilterChange(nextFilters);
+      return;
+    }
+
     let normalized: string | number | boolean | undefined = value;
 
     if (typeof value === 'string') {
@@ -140,6 +151,32 @@ export const SearchFilters = ({ onFilterChange }: SearchFiltersProps) => {
                 <SelectItem value="rent">For Rent</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2 sm:col-span-2 lg:col-span-4">
+            <label className="text-sm font-medium">Amenities & utilities</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+              {PROPERTY_AMENITIES.slice(0, 12).map((amenity) => {
+                const selected = filters.amenities ?? [];
+                const checked = selected.includes(amenity.slug);
+                return (
+                  <label
+                    key={amenity.slug}
+                    className="flex items-center gap-2 text-sm rounded-md border bg-background px-2 py-1.5 cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={() => {
+                        const next = checked
+                          ? selected.filter((a) => a !== amenity.slug)
+                          : [...selected, amenity.slug];
+                        handleFilterChange('amenities', next.length ? next : undefined);
+                      }}
+                    />
+                    <span className="truncate">{amenity.label}</span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

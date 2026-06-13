@@ -2,103 +2,117 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
 All colors MUST be HSL.
-Abuja-inspired Green & White Theme
+Flowcheq Estate — Blue brand signal + neutral base, with the legacy green kept as a supporting accent.
+  Accent (brand signal): light #007AFF / dark #00D1FF
+  Neutral base:          light #F8F9FA / dark #1A1A1A
+  Supporting grays:      #E9ECEF #F1F3F5 #DEE2E6 #2C2E33
+  Error:                 #E03131 / #C92A2A
+  Brand green (legacy):  #2C9B6A
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 150 10% 15%;
+    --background: 210 17% 98%;            /* #F8F9FA */
+    --foreground: 0 0% 10%;               /* #1A1A1A */
 
     --card: 0 0% 100%;
-    --card-foreground: 150 10% 15%;
+    --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 150 10% 15%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 152 55% 38%;
+    --primary: 211 100% 50%;              /* #007AFF */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 152 55% 48%;
+    --primary-glow: 211 100% 62%;
 
-    --secondary: 150 15% 96%;
-    --secondary-foreground: 150 10% 15%;
+    --secondary: 210 14% 95%;             /* #F1F3F5 */
+    --secondary-foreground: 0 0% 10%;
 
-    --muted: 150 10% 96%;
-    --muted-foreground: 150 8% 45%;
+    --muted: 210 16% 93%;                 /* #E9ECEF */
+    --muted-foreground: 215 9% 40%;
 
-    --accent: 152 45% 45%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 210 14% 95%;                /* #F1F3F5 — subtle hover surface */
+    --accent-foreground: 0 0% 10%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 74% 54%;             /* #E03131 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 150 15% 88%;
-    --input: 150 15% 88%;
-    --ring: 152 55% 38%;
+    --border: 210 14% 89%;                /* #DEE2E6 */
+    --input: 210 14% 89%;
+    --ring: 211 100% 50%;
 
     --radius: 0.75rem;
 
-    --gradient-hero: linear-gradient(135deg, hsl(152 55% 38%), hsl(152 55% 48%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(150 15% 98%));
-    --shadow-elegant: 0 10px 40px -10px hsl(152 55% 38% / 0.15);
-    --shadow-hover: 0 20px 50px -10px hsl(152 55% 38% / 0.25);
+    /* Legacy brand green, kept as a supporting/positive signal */
+    --brand-green: 152 55% 38%;           /* #2C9B6A */
+    --brand-green-foreground: 0 0% 100%;
+    --brand-green-glow: 152 55% 48%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(211 100% 50%), hsl(191 100% 50%));
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 17% 98%));
+    --shadow-elegant: 0 10px 40px -10px hsl(211 100% 50% / 0.15);
+    --shadow-hover: 0 20px 50px -10px hsl(211 100% 50% / 0.25);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 150 10% 26%;
-    --sidebar-primary: 152 55% 38%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 26%;
+    --sidebar-primary: 211 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 150 10% 95%;
-    --sidebar-accent-foreground: 150 10% 15%;
-    --sidebar-border: 150 15% 91%;
-    --sidebar-ring: 152 55% 38%;
+    --sidebar-accent: 210 14% 95%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 210 14% 91%;
+    --sidebar-ring: 211 100% 50%;
   }
 
   .dark {
-    --background: 150 20% 6%;
-    --foreground: 150 15% 95%;
+    --background: 0 0% 10%;               /* #1A1A1A */
+    --foreground: 210 17% 98%;            /* #F8F9FA */
 
-    --card: 150 20% 8%;
-    --card-foreground: 150 15% 95%;
+    --card: 223 7% 14%;
+    --card-foreground: 210 17% 98%;
 
-    --popover: 150 20% 8%;
-    --popover-foreground: 150 15% 95%;
+    --popover: 223 7% 14%;
+    --popover-foreground: 210 17% 98%;
 
-    --primary: 152 55% 50%;
-    --primary-foreground: 150 20% 6%;
-    --primary-glow: 152 55% 60%;
+    --primary: 191 100% 50%;             /* #00D1FF */
+    --primary-foreground: 0 0% 10%;
+    --primary-glow: 191 100% 62%;
 
-    --secondary: 150 15% 12%;
-    --secondary-foreground: 150 15% 95%;
+    --secondary: 223 7% 19%;             /* #2C2E33 */
+    --secondary-foreground: 210 17% 98%;
 
-    --muted: 150 15% 12%;
-    --muted-foreground: 150 10% 55%;
+    --muted: 223 7% 19%;                 /* #2C2E33 */
+    --muted-foreground: 215 10% 65%;
 
-    --accent: 152 45% 55%;
-    --accent-foreground: 150 20% 6%;
+    --accent: 223 7% 19%;                /* #2C2E33 — subtle hover surface */
+    --accent-foreground: 210 17% 98%;
 
-    --destructive: 0 63% 50%;
-    --destructive-foreground: 150 15% 95%;
+    --destructive: 0 65% 48%;            /* #C92A2A */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 150 15% 18%;
-    --input: 150 15% 18%;
-    --ring: 152 55% 50%;
+    --border: 223 7% 23%;
+    --input: 223 7% 23%;
+    --ring: 191 100% 50%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(152 55% 40%), hsl(152 55% 55%));
-    --gradient-card: linear-gradient(180deg, hsl(150 20% 8%), hsl(150 20% 10%));
-    --shadow-elegant: 0 10px 40px -10px hsl(152 55% 50% / 0.3);
-    --shadow-hover: 0 20px 50px -10px hsl(152 55% 50% / 0.4);
+    --brand-green: 152 55% 50%;
+    --brand-green-foreground: 0 0% 10%;
+    --brand-green-glow: 152 55% 60%;
 
-    --sidebar-background: 150 15% 8%;
-    --sidebar-foreground: 150 10% 95%;
-    --sidebar-primary: 152 55% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 150 12% 14%;
-    --sidebar-accent-foreground: 150 10% 95%;
-    --sidebar-border: 150 12% 14%;
-    --sidebar-ring: 152 55% 50%;
+    --gradient-hero: linear-gradient(135deg, hsl(191 100% 45%), hsl(211 100% 55%));
+    --gradient-card: linear-gradient(180deg, hsl(223 7% 14%), hsl(0 0% 10%));
+    --shadow-elegant: 0 10px 40px -10px hsl(191 100% 50% / 0.3);
+    --shadow-hover: 0 20px 50px -10px hsl(191 100% 50% / 0.4);
+
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 210 10% 95%;
+    --sidebar-primary: 191 100% 50%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 223 7% 16%;
+    --sidebar-accent-foreground: 210 10% 95%;
+    --sidebar-border: 223 7% 16%;
+    --sidebar-ring: 191 100% 50%;
   }
 }
 

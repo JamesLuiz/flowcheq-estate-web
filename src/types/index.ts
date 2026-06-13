@@ -81,4 +81,5 @@ export interface FilterParams {
   radius?: number;
   limit?: number;
   listingType?: 'rent' | 'buy';
+  amenities?: string[];
 }

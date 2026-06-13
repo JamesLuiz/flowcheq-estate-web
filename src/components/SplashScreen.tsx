@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home } from 'lucide-react';
-
 interface SplashScreenProps {
   onComplete: () => void;
   minimumDisplayTime?: number;
@@ -78,7 +76,17 @@ export const SplashScreen = ({ onComplete, minimumDisplayTime = 2000 }: SplashSc
                 }}
                 className="w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-white/20 backdrop-blur-sm flex items-center justify-center"
               >
-                <Home className="w-12 h-12 md:w-16 md:h-16 text-white" />
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="w-12 h-12 md:w-16 md:h-16 text-white"
+                >
+                  <circle cx="6" cy="6" r="3" fill="currentColor" />
+                  <circle cx="18" cy="12" r="3" fill="currentColor" />
+                  <circle cx="6" cy="18" r="3" fill="currentColor" />
+                  <line x1="6" y1="6" x2="18" y2="12" stroke="currentColor" strokeWidth="2" strokeDasharray="2 2" />
+                  <line x1="18" y1="12" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeDasharray="2 2" />
+                </svg>
               </motion.div>
             </motion.div>
 
@@ -95,7 +103,7 @@ export const SplashScreen = ({ onComplete, minimumDisplayTime = 2000 }: SplashSc
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5, duration: 0.4 }}
                 >
-                  House
+                  Flowcheq
                 </motion.span>
                 <motion.span
                   initial={{ opacity: 0 }}
@@ -103,7 +111,7 @@ export const SplashScreen = ({ onComplete, minimumDisplayTime = 2000 }: SplashSc
                   transition={{ delay: 0.7, duration: 0.4 }}
                   className="text-white/80"
                 >
-                  Me
+                  {' '}Estate
                 </motion.span>
               </h1>
               <motion.p

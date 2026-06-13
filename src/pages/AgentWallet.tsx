@@ -1212,7 +1212,7 @@ const AgentWallet = () => {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-xs">
-                Never share this OTP with anyone. House Me will never ask for your OTP via phone or chat.
+                Never share this OTP with anyone. Flowcheq Estate will never ask for your OTP via phone or chat.
               </AlertDescription>
             </Alert>
           </div>

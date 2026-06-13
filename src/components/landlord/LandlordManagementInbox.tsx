@@ -60,21 +60,48 @@ export function LandlordManagementInbox() {
           const propertyTitle =
             typeof property === 'object' ? property?.title : 'Property';
           const agentName = typeof agent === 'object' ? agent?.name : 'Agent';
+          const agentObj = typeof agent === 'object' ? agent : null;
           return (
             <div
               key={req._id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border bg-muted/30"
+              className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-4 rounded-lg border bg-muted/30"
             >
-              <div>
-                <p className="font-medium">{propertyTitle}</p>
-                <p className="text-sm text-muted-foreground">
-                  {agentName} wants to manage this listing
-                </p>
-                {req.message && (
-                  <p className="text-xs text-muted-foreground mt-1 italic">&ldquo;{req.message}&rdquo;</p>
-                )}
+              <div className="flex gap-3">
+                <img
+                  src={
+                    agentObj?.avatarUrl ||
+                    `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(agentName)}`
+                  }
+                  alt={agentName}
+                  className="h-12 w-12 rounded-full object-cover shrink-0"
+                />
+                <div>
+                  <p className="font-medium">{propertyTitle}</p>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">{agentName}</span>
+                    {agentObj?.verified && (
+                      <span className="ml-1 text-xs text-primary">(verified)</span>
+                    )}{' '}
+                    wants to manage this listing
+                  </p>
+                  {agentObj?.email && (
+                    <p className="text-xs text-muted-foreground">{agentObj.email}</p>
+                  )}
+                  {agentObj?.phone && (
+                    <p className="text-xs text-muted-foreground">{agentObj.phone}</p>
+                  )}
+                  {req.bio && (
+                    <p className="text-sm mt-2 p-2 rounded bg-background border">
+                      <span className="text-xs font-medium text-muted-foreground">Bio: </span>
+                      {req.bio}
+                    </p>
+                  )}
+                  {req.message && (
+                    <p className="text-xs text-muted-foreground mt-1 italic">&ldquo;{req.message}&rdquo;</p>
+                  )}
+                </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 shrink-0">
                 <Button
                   size="sm"
                   onClick={() =>

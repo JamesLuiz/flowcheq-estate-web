@@ -37,6 +37,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { YouverifyAccountCard } from '@/components/YouverifyAccountCard';
 import { format } from 'date-fns';
 
 const LEAD_STATUSES = ['new', 'contacted', 'interested', 'closed'] as const;
@@ -142,6 +143,10 @@ const AgentDashboard = () => {
 
         <div className="mb-8">
           <VerificationDialog />
+        </div>
+
+        <div className="mb-8">
+          <YouverifyAccountCard />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -363,7 +368,7 @@ const AgentDashboard = () => {
           <DialogHeader>
             <DialogTitle>Verify on-site location</DialogTitle>
             <DialogDescription>
-              You must be within 30m of the listing. Uses your device GPS (Nestin Capture on mobile for photos).
+              You must be within 30m of the listing. Uses your device GPS (Flowcheq Capture on mobile for photos).
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">

@@ -13,7 +13,7 @@ import type { FilterParams, House, Agent } from '@/types';
  * Production:
  * - Set VITE_API_URL in your deployment platform's environment variables
  */
-const getApiBaseUrl = () => {
+export const getApiBaseUrl = () => {
   // In development mode, always use localhost unless explicitly overridden
   const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
   
@@ -440,6 +440,7 @@ const housesApi = {
     if (filters?.radius !== undefined && filters.radius !== null) params.radius = filters.radius;
     if (filters?.shared !== undefined) params.shared = String(filters.shared);
     if (filters?.listingType) params.listingType = filters.listingType;
+    if (filters?.amenities?.length) params.amenities = filters.amenities.join(',');
     
     return request<{ data: House[]; pagination: { total: number; limit: number; skip: number } }>(
       '/houses',
@@ -464,6 +465,7 @@ const housesApi = {
     listingType?: 'rent' | 'buy';
     isAirbnb?: boolean;
     viewingFee?: number;
+    amenities?: string[];
     images?: File[] | string[];
     proofOfAddress?: File | null;
     ownershipDocuments?: Array<{ type: string; file: File }>;
@@ -938,9 +940,9 @@ const locationVerificationApi = {
 };
 
 const propertyManagementApi = {
-  createManagementRequest: (propertyId: string, message?: string) =>
+  createManagementRequest: (propertyId: string, message?: string, bio?: string) =>
     request<{ _id: string; status: string }>('/management-requests', 'POST', {
-      body: { propertyId, message },
+      body: { propertyId, message, bio },
     }),
   listOutgoingRequests: () =>
     request<any[]>('/management-requests/outgoing', 'GET'),
@@ -983,6 +985,83 @@ const messagesApi = {
   markAsRead: (partnerId: string) => request<{ success: boolean }>(`/messages/mark-read/${partnerId}`, 'POST'),
 };
 
+const partnersApi = {
+  submitLead: (body: {
+    name: string;
+    email: string;
+    phone: string;
+    dateOfBirth: string;
+    city?: string;
+    state?: string;
+    address?: string;
+    propertyCount?: number;
+    notes?: string;
+  }) => request<any>('/partners/leads', 'POST', { body, skipAuth: true }),
+  listLeads: (status?: string) =>
+    request<any[]>('/admin/partner-leads', 'GET', { params: status ? { status } : undefined }),
+  contactLead: (
+    id: string,
+    body: { channel: 'email' | 'whatsapp'; message: string; subject?: string },
+  ) => request<{ whatsappUrl?: string }>(`/admin/partner-leads/${id}/contact`, 'POST', { body }),
+};
+
+const legalReviewApi = {
+  listPending: () => request<any[]>('/legal-review/pending', 'GET'),
+  getOne: (houseId: string) => request<any>(`/legal-review/${houseId}`, 'GET'),
+  checkCertificate: (certificateNumber: string, excludeHouseId?: string) =>
+    request<{ duplicate: boolean; existing?: unknown }>('/legal-review/check-certificate', 'GET', {
+      params: { certificateNumber, excludeHouseId },
+    }),
+  approve: (
+    houseId: string,
+    body: {
+      certificateNumber: string;
+      ownerName: string;
+      plotNumber?: string;
+      surveyNumber?: string;
+      location?: string;
+      issueDate?: string;
+      lga?: string;
+      state?: string;
+      notes?: string;
+    },
+  ) => request<any>(`/legal-review/${houseId}/approve`, 'POST', { body }),
+  reject: (houseId: string, body: { rejectionReason: string; notes?: string }) =>
+    request<any>(`/legal-review/${houseId}/reject`, 'POST', { body }),
+};
+
+const youverifyApi = {
+  initiateAccountVerification: () =>
+    request<{
+      reference?: string;
+      checkoutUrl?: string;
+      status?: string;
+      message?: string;
+      alreadyVerified?: boolean;
+    }>('/youverify/account/initiate', 'POST'),
+};
+
+export interface AppNotification {
+  id: string;
+  type: string;
+  title: string;
+  body?: string;
+  link?: string;
+  data?: Record<string, unknown>;
+  read: boolean;
+  createdAt: string;
+}
+
+const notificationsApi = {
+  list: (unreadOnly = false) =>
+    request<AppNotification[]>('/notifications', 'GET', {
+      params: unreadOnly ? { unreadOnly: 'true' } : undefined,
+    }),
+  unreadCount: () => request<{ unreadCount: number }>('/notifications/unread-count', 'GET'),
+  markRead: (id: string) => request<{ success: boolean }>(`/notifications/${id}/read`, 'POST'),
+  markAllRead: () => request<{ success: boolean }>('/notifications/read-all', 'POST'),
+};
+
 export const api = {
   auth: authApi,
   houses: housesApi,
@@ -997,5 +1076,9 @@ export const api = {
   promotions: promotionsApi,
   viewings: viewingsApi,
   messages: messagesApi,
+  partners: partnersApi,
+  legalReview: legalReviewApi,
+  youverify: youverifyApi,
+  notifications: notificationsApi,
 };
 

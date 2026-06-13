@@ -15,7 +15,7 @@ export const Footer = () => {
           
           {/* About Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-primary">House me</h3>
+            <h3 className="text-lg font-bold text-primary">Flowcheq Estate</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Your trusted real estate platform for finding premium properties in Abuja. We connect you with the best homes in Nigeria's capital.
             </p>
@@ -130,7 +130,7 @@ export const Footer = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-border text-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {currentYear} House me. All rights reserved. | Proudly serving Abuja residents
+            &copy; {currentYear} Flowcheq Estate. All rights reserved. | Proudly serving Abuja residents
           </p>
         </div>
       </div>

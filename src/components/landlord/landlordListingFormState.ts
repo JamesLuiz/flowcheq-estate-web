@@ -23,6 +23,7 @@ export const initialLandlordListingFormState = {
   proofOfAddress: null as File | null,
   ownershipDocs: {} as Partial<Record<OwnershipDocType, File | null>>,
   taggedPhotos: [] as Array<{ file: File; tag: string; description: string }>,
+  amenities: [] as string[],
 };
 
 export type LandlordListingFormState = typeof initialLandlordListingFormState;

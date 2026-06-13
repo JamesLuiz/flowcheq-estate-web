@@ -117,7 +117,7 @@ const Auth = () => {
                 <Home className="h-8 w-8 text-primary-foreground" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold mb-2">Welcome to House me</h1>
+            <h1 className="text-3xl font-bold mb-2">Welcome to Flowcheq Estate</h1>
             <p className="text-muted-foreground">Login or create your account</p>
           </div>
 

@@ -27,7 +27,7 @@ const AgentGuide = () => {
             Agent & Landlord Guide
           </h1>
           <p className="text-lg text-muted-foreground">
-            Everything you need to know about managing your properties on House Me
+            Everything you need to know about managing your properties on Flowcheq Estate
           </p>
         </div>
 

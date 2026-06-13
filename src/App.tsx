@@ -19,7 +19,7 @@ import Dashboard from "./pages/Dashboard";
 import UserDashboard from "./pages/UserDashboard";
 import WalletRedirect from "./pages/WalletRedirect";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { LISTING_OWNER_ROLES, AGENT_ROLES, ADMIN_ROLES } from "./lib/roles";
+import { LISTING_OWNER_ROLES, AGENT_ROLES, ADMIN_ROLES, LAWYER_ROLES } from "./lib/roles";
 import PropertyComparison from "./pages/PropertyComparison";
 import MapView from "./pages/MapView";
 import SearchMap from "./pages/SearchMap";
@@ -36,10 +36,13 @@ import ViewingPaymentCallback from "./pages/ViewingPaymentCallback";
 import AgentWallet from "./pages/AgentWallet";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
+import { NotificationProvider } from "./context/NotificationContext";
 
 const Admin = lazy(() => import("./pages/Admin"));
 const LandlordDashboard = lazy(() => import("./pages/LandlordDashboard"));
 const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
+const LawyerDashboard = lazy(() => import("./pages/LawyerDashboard"));
+const Partners = lazy(() => import("./pages/Partners"));
 
 const PageLoader = () => (
   <div className="min-h-[50vh] flex items-center justify-center">
@@ -63,6 +66,7 @@ const App = () => {
           <SplashScreen onComplete={handleSplashComplete} minimumDisplayTime={2500} />
         )}
         <AuthProvider>
+        <NotificationProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -103,6 +107,14 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/lawyer/dashboard"
+                element={
+                  <ProtectedRoute roles={[...LAWYER_ROLES, ...ADMIN_ROLES]}>
+                    <LawyerDashboard />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/wallet" element={<WalletRedirect />} />
               <Route
                 path="/landlord/wallet"
@@ -130,6 +142,7 @@ const App = () => {
               <Route path="/auth/company" element={<CompanyAuth />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/partners" element={<Partners />} />
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/promotions/setup" element={<PromotionSetup />} />
               <Route path="/promotions/callback" element={<PromotionCallback />} />
@@ -139,6 +152,7 @@ const App = () => {
             </Suspense>
           </BrowserRouter>
         </TooltipProvider>
+        </NotificationProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

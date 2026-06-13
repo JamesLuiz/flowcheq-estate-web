@@ -151,7 +151,7 @@ const ContactUs = () => {
                   <div>
                     <h3 className="font-bold text-lg mb-2">Call Us</h3>
                     <p className="text-muted-foreground">
-                      House me: <a href="https://wa.me/2349152087229" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">+234 915 208 7229</a><br />
+                      Flowcheq Estate: <a href="https://wa.me/2349152087229" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">+234 915 208 7229</a><br />
                     </p>
                   </div>
                 </div>
@@ -163,7 +163,7 @@ const ContactUs = () => {
                   <div>
                     <h3 className="font-bold text-lg mb-2">Email Us</h3>
                     <p className="text-muted-foreground">
-                      House me: <a href="mailto:housemedream@gmail.com" className="hover:text-primary transition-colors">housemedream@gmail.com</a><br />
+                      Flowcheq Estate: <a href="mailto:housemedream@gmail.com" className="hover:text-primary transition-colors">housemedream@gmail.com</a><br />
                     </p>
                   </div>
                 </div>

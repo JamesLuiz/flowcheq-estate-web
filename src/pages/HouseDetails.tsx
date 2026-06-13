@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { HouseMapView } from '@/components/HouseMapView';
 import { VirtualTour } from '@/components/VirtualTour';
 import { ViewingScheduler } from '@/components/ViewingScheduler';
+import { AccountVerificationBanner } from '@/components/AccountVerificationBanner';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
@@ -470,6 +471,7 @@ const HouseDetails = () => {
           </div>
 
           <div className="lg:col-span-1">
+            <AccountVerificationBanner className="mb-4" />
             <Card className="sticky top-24">
               <CardContent className="p-6 space-y-6">
                 <div className="text-center">

@@ -14,6 +14,8 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { NotificationBell } from './NotificationBell';
+import { Logo } from './Logo';
 
 export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -61,12 +63,7 @@ export const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <Home className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-              House me
-            </span>
-          </Link>
+          <Logo />
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
@@ -85,6 +82,7 @@ export const Navbar = () => {
             <ThemeToggle />
             {isAuthenticated ? (
               <>
+                <NotificationBell />
                 {/* Messages Icon */}
                 <Link to="/messages" className="relative">
                   <Button variant="ghost" size="icon" className="relative">
@@ -179,6 +177,7 @@ export const Navbar = () => {
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-2">
             <ThemeToggle />
+            {isAuthenticated && <NotificationBell />}
             {isAuthenticated && (
               <Link to="/messages" className="relative">
                 <Button variant="ghost" size="icon" className="relative">

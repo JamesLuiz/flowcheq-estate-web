@@ -24,19 +24,25 @@ interface AgentRequestManageProps {
 export function AgentRequestManage({ propertyId, propertyTitle }: AgentRequestManageProps) {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
+  const [bio, setBio] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: () =>
-      api.propertyManagement.createManagementRequest(propertyId, message || undefined),
+      api.propertyManagement.createManagementRequest(
+        propertyId,
+        message || undefined,
+        bio || undefined,
+      ),
     onSuccess: () => {
       toast({
         title: 'Request sent',
-        description: 'The landlord will review your management request.',
+        description: 'The landlord will review your profile and management request.',
       });
       setOpen(false);
       setMessage('');
+      setBio('');
       queryClient.invalidateQueries({ queryKey: ['management-requests-outgoing'] });
     },
     onError: (e: Error) => {
@@ -60,11 +66,23 @@ export function AgentRequestManage({ propertyId, propertyTitle }: AgentRequestMa
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
+          <Label>Your bio / experience</Label>
+          <Textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            placeholder="Tell the landlord about your experience, areas you cover, and track record…"
+          />
+          <p className="text-xs text-muted-foreground">
+            The landlord reviews this before approving you to talk to house hunters and verify the
+            property on-site.
+          </p>
+        </div>
+        <div className="space-y-2">
           <Label>Message to landlord (optional)</Label>
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Brief intro and how you will help market this property…"
+            placeholder="Brief note about how you will help market this property…"
           />
         </div>
         <DialogFooter>
