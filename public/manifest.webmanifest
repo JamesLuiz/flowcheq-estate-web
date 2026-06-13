@@ -1,0 +1,20 @@
+{
+  "name": "Flowcheq Estate",
+  "short_name": "Flowcheq",
+  "description": "Verified property marketplace and agent tools for Abuja, Nigeria",
+  "start_url": "/agents/app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8F9FA",
+  "theme_color": "#007AFF",
+  "lang": "en-NG",
+  "icons": [
+    {
+      "src": "/og-image.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}
