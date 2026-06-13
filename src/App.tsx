@@ -43,6 +43,7 @@ const LandlordDashboard = lazy(() => import("./pages/LandlordDashboard"));
 const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
 const LawyerDashboard = lazy(() => import("./pages/LawyerDashboard"));
 const Partners = lazy(() => import("./pages/Partners"));
+const AgentsAppDownload = lazy(() => import("./pages/AgentsAppDownload"));
 
 const PageLoader = () => (
   <div className="min-h-[50vh] flex items-center justify-center">
@@ -143,6 +144,7 @@ const App = () => {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/partners" element={<Partners />} />
+              <Route path="/agents/app" element={<AgentsAppDownload />} />
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/promotions/setup" element={<PromotionSetup />} />
               <Route path="/promotions/callback" element={<PromotionCallback />} />
