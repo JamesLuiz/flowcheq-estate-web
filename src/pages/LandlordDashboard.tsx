@@ -143,7 +143,19 @@ const LandlordDashboard = () => {
   }, [searchParams]);
 
   const createListingMutation = useMutation({
-    mutationFn: ({ coordinates, location }: { coordinates?: { lat: number; lng: number }; location: string }) => {
+    mutationFn: ({
+      coordinates,
+      location,
+      googlePlaceId,
+      formattedAddress,
+      coordinatesSource,
+    }: {
+      coordinates?: { lat: number; lng: number };
+      location: string;
+      googlePlaceId?: string;
+      formattedAddress?: string;
+      coordinatesSource?: 'places' | 'geocode' | 'agent_gps';
+    }) => {
       // Keep HTML formatting from RichTextEditor - don't strip it
       const description = formState.description?.trim();
       
@@ -175,6 +187,9 @@ const LandlordDashboard = () => {
         area: Number(formState.area),
         featured: formState.featured,
         coordinates,
+        googlePlaceId,
+        formattedAddress,
+        coordinatesSource,
         isShared: formState.isShared,
         totalSlots: formState.isShared ? Number(formState.totalSlots) : undefined,
         listingType: formState.listingType,
@@ -231,7 +246,21 @@ const LandlordDashboard = () => {
   });
 
   const updateListingMutation = useMutation({
-    mutationFn: ({ houseId, coordinates, location }: { houseId: string; coordinates?: { lat: number; lng: number }; location: string }) =>
+    mutationFn: ({
+      houseId,
+      coordinates,
+      location,
+      googlePlaceId,
+      formattedAddress,
+      coordinatesSource,
+    }: {
+      houseId: string;
+      coordinates?: { lat: number; lng: number };
+      location: string;
+      googlePlaceId?: string;
+      formattedAddress?: string;
+      coordinatesSource?: 'places' | 'geocode' | 'agent_gps';
+    }) =>
       api.houses.update(houseId, {
         title: formState.title,
         description: formState.description,
@@ -243,6 +272,9 @@ const LandlordDashboard = () => {
         area: Number(formState.area),
         featured: formState.featured,
         coordinates,
+        googlePlaceId,
+        formattedAddress,
+        coordinatesSource,
         isShared: formState.isShared,
         totalSlots: formState.isShared ? Number(formState.totalSlots) : undefined,
         viewingFee: formState.viewingFee ? Number(formState.viewingFee) : undefined,
@@ -304,7 +336,8 @@ const LandlordDashboard = () => {
     if (!editingHouse) return;
 
       setIsGeocoding(true);
-    const { coordinates, fullLocation } = await geocodeListingLocation(formState, () => {
+    const { coordinates, fullLocation, googlePlaceId, formattedAddress, coordinatesSource } =
+      await geocodeListingLocation(formState, () => {
           toast({
             variant: 'default',
             title: 'Location geocoding failed',
@@ -315,10 +348,24 @@ const LandlordDashboard = () => {
         setIsGeocoding(false);
 
     updateListingMutation.mutate(
-      { houseId: editingHouse.id, coordinates, location: fullLocation },
+      {
+        houseId: editingHouse.id,
+        coordinates,
+        location: fullLocation,
+        googlePlaceId,
+        formattedAddress,
+        coordinatesSource,
+      },
       {
         onSuccess: () => {
-          setFormState((prev) => ({ ...prev, coordinates, location: fullLocation }));
+          setFormState((prev) => ({
+            ...prev,
+            coordinates,
+            location: fullLocation,
+            googlePlaceId: googlePlaceId ?? prev.googlePlaceId,
+            formattedAddress: formattedAddress ?? prev.formattedAddress,
+            coordinatesSource: coordinatesSource ?? prev.coordinatesSource,
+          }));
         },
       },
     );
@@ -349,7 +396,8 @@ const LandlordDashboard = () => {
     }
 
       setIsGeocoding(true);
-    const { coordinates, fullLocation } = await geocodeListingLocation(formState, () => {
+    const { coordinates, fullLocation, googlePlaceId, formattedAddress, coordinatesSource } =
+      await geocodeListingLocation(formState, () => {
           toast({
             variant: 'default',
             title: 'Location geocoding failed',
@@ -359,7 +407,9 @@ const LandlordDashboard = () => {
     });
         setIsGeocoding(false);
 
-    createListingMutation.mutate({ coordinates, location: fullLocation }, {
+    createListingMutation.mutate(
+      { coordinates, location: fullLocation, googlePlaceId, formattedAddress, coordinatesSource },
+      {
       onSuccess: () => {
         // Reset form state
         setFormState(initialFormState);

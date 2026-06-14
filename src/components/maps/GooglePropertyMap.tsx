@@ -7,6 +7,11 @@ import {
 } from '@react-google-maps/api';
 import { Loader2, Navigation, Satellite } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  getGoogleMapsApiKey,
+  GOOGLE_MAPS_LIBRARIES,
+  GOOGLE_MAPS_LOADER_ID,
+} from '@/lib/googleMaps';
 
 export interface MapMarker {
   lat: number;
@@ -57,10 +62,11 @@ export function GooglePropertyMap({
   distanceMeters,
   resolvedAddressLabel,
 }: GooglePropertyMapProps) {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? '';
+  const apiKey = getGoogleMapsApiKey();
   const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
+    id: GOOGLE_MAPS_LOADER_ID,
     googleMapsApiKey: apiKey,
+    libraries: GOOGLE_MAPS_LIBRARIES,
   });
 
   const [mapType, setMapType] = useState<'satellite' | 'roadmap' | 'hybrid'>(defaultMapType);

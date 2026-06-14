@@ -34,6 +34,16 @@ export interface House {
   area?: number;
   featured?: boolean;
   coordinates?: Coordinates;
+  googlePlaceId?: string;
+  formattedAddress?: string;
+  coordinatesSource?: 'places' | 'geocode' | 'agent_gps';
+  coordinatesUpdatedAt?: string;
+  coordinatesCorrection?: {
+    previousLat: number;
+    previousLng: number;
+    distanceMeters: number;
+    correctedAt: string;
+  };
   viewCount?: number;
   whatsappClicks?: number;
   createdAt?: string;

@@ -2,6 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { MapPin, Bed, Bath, Maximize, Loader2, Filter, Navigation } from 'lucide-react';
+import {
+  getGoogleMapsApiKey,
+  GOOGLE_MAPS_LIBRARIES,
+  GOOGLE_MAPS_LOADER_ID,
+} from '@/lib/googleMaps';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,10 +42,11 @@ const MapView = () => {
   const [locationFilter, setLocationFilter] = useState<string>('all');
   const [userPosition, setUserPosition] = useState<google.maps.LatLngLiteral | null>(null);
 
-  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const googleMapsApiKey = getGoogleMapsApiKey();
   const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: googleMapsApiKey ?? '',
+    id: GOOGLE_MAPS_LOADER_ID,
+    googleMapsApiKey,
+    libraries: GOOGLE_MAPS_LIBRARIES,
   });
 
   const housesQuery = useQuery({

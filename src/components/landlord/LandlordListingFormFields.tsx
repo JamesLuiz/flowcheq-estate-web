@@ -23,6 +23,7 @@ import {
 import { NIGERIAN_STATES } from '@/data/nigerianStates';
 import type { LandlordListingFormState } from './landlordListingFormState';
 import { AmenitiesPicker } from '@/components/landlord/AmenitiesPicker';
+import { PlacesAddressPicker } from '@/components/landlord/PlacesAddressPicker';
 
 type LandlordListingFormFieldsProps = {
   idPrefix?: string;
@@ -119,8 +120,34 @@ export function LandlordListingFormFields({
       </div>
 
       <div className="space-y-4">
+        <PlacesAddressPicker
+          id={p('placesSearch')}
+          value={formState.formattedAddress || formState.streetAddress}
+          onChange={(value) =>
+            setFormState((prev) => ({
+              ...prev,
+              formattedAddress: value,
+              streetAddress: value,
+            }))
+          }
+          onPlaceSelected={(place) =>
+            setFormState((prev) => ({
+              ...prev,
+              googlePlaceId: place.googlePlaceId,
+              formattedAddress: place.formattedAddress,
+              streetAddress: place.streetAddress,
+              city: place.city || prev.city,
+              state: place.state || prev.state,
+              postalCode: place.postalCode || prev.postalCode,
+              location: place.formattedAddress,
+              coordinates: place.coordinates,
+              coordinatesSource: 'places',
+            }))
+          }
+        />
+
         <div className="space-y-2">
-          <Label htmlFor={p('streetAddress')}>Street Address</Label>
+          <Label htmlFor={p('streetAddress')}>Street address (confirm or edit)</Label>
           <Input
             id={p('streetAddress')}
             placeholder="e.g., 123 Main Street"
@@ -202,9 +229,41 @@ export function LandlordListingFormFields({
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor={p('manualLat')}>Latitude (optional)</Label>
+            <Input
+              id={p('manualLat')}
+              type="number"
+              step="any"
+              placeholder="e.g., 9.0765"
+              value={formState.manualLat}
+              onChange={(event) =>
+                setFormState((prev) => ({ ...prev, manualLat: event.target.value }))
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor={p('manualLng')}>Longitude (optional)</Label>
+            <Input
+              id={p('manualLng')}
+              type="number"
+              step="any"
+              placeholder="e.g., 7.3986"
+              value={formState.manualLng}
+              onChange={(event) =>
+                setFormState((prev) => ({ ...prev, manualLng: event.target.value }))
+              }
+            />
+          </div>
+        </div>
+
         <p className="text-xs text-muted-foreground">
-          Enter the property address details. Coordinates will be automatically{' '}
-          {mode === 'create' ? 'added' : 'updated'} for accurate map navigation.
+          {formState.googlePlaceId
+            ? 'Address verified via Google Places. Coordinates are optional — agent GPS photos can refine the pin later.'
+            : 'Enter address details or use Google Places search above. Coordinates are added automatically when possible.'}
+          {formState.coordinatesSource === 'agent_gps' &&
+            ' Map pin was refined from agent on-site photos.'}
         </p>
       </div>
 
