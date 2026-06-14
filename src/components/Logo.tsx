@@ -6,7 +6,7 @@ interface LogoProps {
   className?: string;
   /** Wrap the logo in a link to "/". Defaults to true. */
   withLink?: boolean;
-  /** Show the "Flowcheq" wordmark next to the icon. Defaults to true. */
+  /** Show the "Flowcheq Estate" wordmark next to the icon. Defaults to true. */
   showText?: boolean;
 }
 
