@@ -59,7 +59,7 @@ export const Logo = ({ className = "", withLink = true, showText = true }: LogoP
           />
         </svg>
       </div>
-      {showText && <span className="text-foreground">Flowcheq</span>}
+      {showText && <span className="text-foreground">Flowcheq Estate</span>}
     </motion.div>
   );
 
