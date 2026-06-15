@@ -42,8 +42,37 @@ Serve with **Vercel** (`vercel.json` included), **nginx** (`nginx.conf` + `Docke
 ## Docker (web only)
 
 ```bash
-docker build -t flowcheq-web .
-docker run -p 8080:80 -e VITE_API_URL=https://api.estate.flowcheq.com flowcheq-web
+docker build \
+  --build-arg VITE_API_URL=https://api.estate.flowcheq.com \
+  -t flowcheq-web .
+docker run -p 8080:80 flowcheq-web
+```
+
+The container serves **nginx on port 80** by default (`PORT=80`).
+
+---
+
+## Coolify / Traefik
+
+**Bad Gateway (502)** almost always means Traefik is proxying to the wrong container port.
+
+| Setting | Value |
+|---------|--------|
+| **Ports Exposes** (Coolify app) | `80` |
+| **PORT** env (optional) | `80` (default) — only set if you must match a custom Traefik target |
+
+This image is **nginx + static files**, not Node. Do **not** use port `3000` or `3001` unless you also set `PORT=3001` in Coolify env vars.
+
+**Build-time** (Coolify → Build Arguments):
+
+```
+VITE_API_URL=https://api.estate.flowcheq.com
+```
+
+After changing the port to `80`, redeploy. Traefik labels should show:
+
+```
+traefik.http.services.*.loadbalancer.server.port=80
 ```
 
 ---
