@@ -16,6 +16,7 @@ export interface Agent {
   verified?: boolean;
   verificationStatus?: string;
   verificationDate?: string;
+  youverifyStatus?: 'not_started' | 'pending' | 'in_progress' | 'verified' | 'failed';
   personaInquiryId?: string;
 }
 

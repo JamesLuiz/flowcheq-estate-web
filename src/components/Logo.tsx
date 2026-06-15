@@ -49,14 +49,12 @@ export const Logo = ({ className = "", withLink = true, showText = true }: LogoP
             strokeDasharray="2 2"
           />
 
-          <motion.circle
-            cx="12"
-            cy="9"
-            r="1.5"
-            fill="currentColor"
-            animate={{ cx: [6, 18, 6], cy: [6, 12, 18] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          />
+          <motion.g
+            animate={{ x: [0, 12, 0], y: [0, 3, 9] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <circle cx="12" cy="9" r="1.5" fill="currentColor" />
+          </motion.g>
         </svg>
       </div>
       {showText && <span className="text-foreground">Flowcheq Estate</span>}

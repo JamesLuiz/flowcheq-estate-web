@@ -3,9 +3,8 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, User, ShieldAlert } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
-import { VerificationDialog } from '@/components/VerificationDialog';
 import { LandlordManagementInbox } from '@/components/landlord/LandlordManagementInbox';
-import { isListingOwnerRole } from '@/lib/roles';
+import { isListingOwnerRole, isYouverifyVerified } from '@/lib/roles';
 import { INSPECTION_FEE_NGN, GPS_PHOTO_MIN, GPS_PHOTO_MAX, requiredOwnershipDocs } from '@/lib/listing-requirements';
 import { formatPriceNgn } from '@/lib/format';
 import { ViewingManagement } from '@/components/ViewingScheduler';
@@ -49,7 +48,7 @@ const LandlordDashboard = () => {
   const inspectionConfirmRef = useRef<string | null>(null);
 
   const isListingOwner = isListingOwnerRole(user?.role);
-  const isVerified = user?.verified && user?.verificationStatus === 'approved';
+  const isVerified = isYouverifyVerified(user);
 
   const housesQuery = useQuery({
     queryKey: ['landlord-houses', user?.id],
@@ -489,10 +488,8 @@ const LandlordDashboard = () => {
           <YouverifyAccountCard />
         </div>
 
-        {/* Verification Dialog */}
         <div className="mb-8">
-          <VerificationDialog />
-        <LandlordManagementInbox />
+          <LandlordManagementInbox />
         </div>
 
         {/* Viewing Management */}
@@ -508,9 +505,10 @@ const LandlordDashboard = () => {
               <div className="flex items-center gap-3">
                 <ShieldAlert className="h-6 w-6 text-destructive" />
                 <div>
-                  <h3 className="font-semibold text-destructive">Verification Required</h3>
+                  <h3 className="font-semibold text-destructive">YouVerify required</h3>
                   <p className="text-sm text-muted-foreground">
-                    You must be verified to add properties. Complete your verification above.
+                    Complete YouVerify identity check above (NIN or driver license + selfie) before
+                    adding properties.
                   </p>
                 </div>
               </div>

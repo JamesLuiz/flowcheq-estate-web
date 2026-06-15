@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
+import { YouverifyAccountCard } from '@/components/YouverifyAccountCard';
 
 type PendingListing = {
   id: string;
@@ -123,6 +124,10 @@ const LawyerDashboard = () => {
               Review C of O and ownership documents. Only lawyer-approved listings go live.
             </p>
           </div>
+        </div>
+
+        <div className="mb-8">
+          <YouverifyAccountCard />
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

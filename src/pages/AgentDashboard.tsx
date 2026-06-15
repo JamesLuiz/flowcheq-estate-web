@@ -11,7 +11,6 @@ import {
   Wallet,
 } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
-import { VerificationDialog } from '@/components/VerificationDialog';
 import { PhotoLocationVerificationPanel } from '@/components/verification/PhotoLocationVerificationPanel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -139,10 +138,6 @@ const AgentDashboard = () => {
               Wallet
             </Button>
           </div>
-        </div>
-
-        <div className="mb-8">
-          <VerificationDialog />
         </div>
 
         <div className="mb-8">

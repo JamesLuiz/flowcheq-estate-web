@@ -4,6 +4,12 @@ export const AGENT_ROLES = ['agent'] as const;
 export const HOUSE_HUNTER_ROLES = ['user', 'tenant', 'house_hunter'] as const;
 export const ADMIN_ROLES = ['admin'] as const;
 export const LAWYER_ROLES = ['lawyer'] as const;
+export const YOUVERIFY_ACCOUNT_ROLES = [
+  ...LISTING_OWNER_ROLES,
+  ...AGENT_ROLES,
+  ...HOUSE_HUNTER_ROLES,
+  ...LAWYER_ROLES,
+] as const;
 
 export type ListingOwnerRole = (typeof LISTING_OWNER_ROLES)[number];
 
@@ -25,6 +31,14 @@ export function isLawyerRole(role?: string | null): boolean {
 
 export function isHouseHunterRole(role?: string | null): boolean {
   return HOUSE_HUNTER_ROLES.includes(role as (typeof HOUSE_HUNTER_ROLES)[number]);
+}
+
+export function requiresYouverifyAccount(role?: string | null): boolean {
+  return YOUVERIFY_ACCOUNT_ROLES.includes(role as (typeof YOUVERIFY_ACCOUNT_ROLES)[number]);
+}
+
+export function isYouverifyVerified(user?: { youverifyStatus?: string | null } | null): boolean {
+  return user?.youverifyStatus === 'verified';
 }
 
 /** Default dashboard route after login for each role */

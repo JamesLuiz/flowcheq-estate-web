@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { UserViewingManagement } from '@/components/ViewingScheduler';
 import { formatPriceNgn } from '@/lib/format';
+import { YouverifyAccountCard } from '@/components/YouverifyAccountCard';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -80,6 +81,10 @@ const UserDashboard = () => {
             <User className="mr-2 h-4 w-4" />
             Edit Profile
           </Button>
+        </div>
+
+        <div className="mb-8">
+          <YouverifyAccountCard />
         </div>
 
         <Tabs defaultValue="favorites" className="w-full">
