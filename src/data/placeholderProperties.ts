@@ -28,7 +28,7 @@ export const placeholderProperties: Partial<House>[] = [
     agent: {
       id: 'placeholder-agent-1',
       name: 'Flowcheq Estate Agent',
-      email: 'housemedream@gmail.com',
+      email: 'contact@flowcheq.com',
       phone: '+2349152087229',
       role: 'agent',
     },
@@ -58,7 +58,7 @@ export const placeholderProperties: Partial<House>[] = [
     agent: {
       id: 'placeholder-agent-2',
       name: 'Flowcheq Estate Agent',
-      email: 'housemedream@gmail.com',
+      email: 'contact@flowcheq.com',
       phone: '+2349152087229',
       role: 'agent',
     },
@@ -88,7 +88,7 @@ export const placeholderProperties: Partial<House>[] = [
     agent: {
       id: 'placeholder-agent-3',
       name: 'Flowcheq Estate Agent',
-      email: 'housemedream@gmail.com',
+      email: 'contact@flowcheq.com',
       phone: '+2349152087229',
       role: 'agent',
     },
@@ -118,7 +118,7 @@ export const placeholderProperties: Partial<House>[] = [
     agent: {
       id: 'placeholder-agent-4',
       name: 'Flowcheq Estate Agent',
-      email: 'housemedream@gmail.com',
+      email: 'contact@flowcheq.com',
       phone: '+2349152087229',
       role: 'agent',
     },
@@ -148,7 +148,7 @@ export const placeholderProperties: Partial<House>[] = [
     agent: {
       id: 'placeholder-agent-5',
       name: 'Flowcheq Estate Agent',
-      email: 'housemedream@gmail.com',
+      email: 'contact@flowcheq.com',
       phone: '+2349152087229',
       role: 'agent',
     },
@@ -178,7 +178,7 @@ export const placeholderProperties: Partial<House>[] = [
     agent: {
       id: 'placeholder-agent-6',
       name: 'Flowcheq Estate Agent',
-      email: 'housemedream@gmail.com',
+      email: 'contact@flowcheq.com',
       phone: '+2349152087229',
       role: 'agent',
     },

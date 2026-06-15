@@ -85,6 +85,8 @@ export const HouseCard = ({ house }: HouseCardProps) => {
           <img
             src={imageSrc}
             alt={house.title}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-smooth"
           />
           {canFavorite && (

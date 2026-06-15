@@ -4,6 +4,7 @@ import { Home, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import {
   Card,
@@ -138,9 +139,8 @@ const ResetPassword = () => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="password">New Password</Label>
-                    <Input
+                    <PasswordInput
                       id="password"
-                      type="password"
                       placeholder="••••••••"
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
@@ -154,9 +154,8 @@ const ResetPassword = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirm-password">Confirm Password</Label>
-                    <Input
+                    <PasswordInput
                       id="confirm-password"
-                      type="password"
                       placeholder="••••••••"
                       value={confirmPassword}
                       onChange={(event) => setConfirmPassword(event.target.value)}

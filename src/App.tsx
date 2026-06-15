@@ -26,7 +26,6 @@ import SearchMap from "./pages/SearchMap";
 import Auth from "./pages/Auth";
 import VerifyEmail from "./pages/VerifyEmail";
 import CompanyAuth from "./pages/CompanyAuth";
-import LawFirmAuth from "./pages/LawFirmAuth";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ContactUs from "./pages/ContactUs";
@@ -44,7 +43,6 @@ const LandlordDashboard = lazy(() => import("./pages/LandlordDashboard"));
 const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
 const LawyerDashboard = lazy(() => import("./pages/LawyerDashboard"));
 const Partners = lazy(() => import("./pages/Partners"));
-const AgentsAppDownload = lazy(() => import("./pages/AgentsAppDownload"));
 
 const PageLoader = () => (
   <div className="min-h-[50vh] flex items-center justify-center">
@@ -52,7 +50,17 @@ const PageLoader = () => (
   </div>
 );
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 15,
+      gcTime: 1000 * 60 * 60 * 24,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -142,11 +150,9 @@ const App = () => {
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/verify-email" element={<VerifyEmail />} />
               <Route path="/auth/company" element={<CompanyAuth />} />
-              <Route path="/auth/law-firm" element={<LawFirmAuth />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/partners" element={<Partners />} />
-              <Route path="/agents/app" element={<AgentsAppDownload />} />
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/promotions/setup" element={<PromotionSetup />} />
               <Route path="/promotions/callback" element={<PromotionCallback />} />

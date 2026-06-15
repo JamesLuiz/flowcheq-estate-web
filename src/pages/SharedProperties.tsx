@@ -17,6 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, Search, Filter, Heart, Loader2, Calendar, UserCheck, Eye } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useCachedHouses } from '@/hooks/useCachedHouses';
 import { House } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -44,12 +45,9 @@ const SharedProperties = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['shared-properties'],
-    queryFn: () => api.houses.list({ shared: true }),
-  });
-
-  const sharedProperties = data?.data || [];
+  const housesQuery = useCachedHouses({ shared: true });
+  const sharedProperties = housesQuery.houses;
+  const isLoading = housesQuery.isInitialLoad;
 
   const filteredProperties = sharedProperties.filter((property: House & { isShared?: boolean; totalSlots?: number; availableSlots?: number }) => {
     const matchesSearch = property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

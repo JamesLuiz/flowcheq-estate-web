@@ -4,6 +4,7 @@ import { Building2, Upload, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -475,9 +476,8 @@ const CompanyAuth = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="password">Password *</Label>
-                      <Input
+                      <PasswordInput
                         id="password"
-                        type="password"
                         placeholder="••••••••"
                         value={formState.password}
                         onChange={(e) => setFormState(prev => ({ ...prev, password: e.target.value }))}
@@ -487,9 +487,8 @@ const CompanyAuth = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                      <Input
+                      <PasswordInput
                         id="confirmPassword"
-                        type="password"
                         placeholder="••••••••"
                         value={formState.confirmPassword}
                         onChange={(e) => setFormState(prev => ({ ...prev, confirmPassword: e.target.value }))}

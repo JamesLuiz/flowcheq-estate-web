@@ -1,5 +1,6 @@
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { contactMailto } from '@/lib/contact';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Home, 
@@ -274,7 +275,7 @@ const AgentGuide = () => {
                   WhatsApp Support
                 </a>
                 <a 
-                  href="mailto:housemedream@gmail.com"
+                  href={contactMailto}
                   className="inline-flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-6 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
                 >
                   <FileText className="h-4 w-4" />

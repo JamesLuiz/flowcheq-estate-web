@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Map } from '@/components/Map';
@@ -8,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, MapPin, Navigation } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useCachedHouses } from '@/hooks/useCachedHouses';
 import { formatPriceNgn } from '@/lib/format';
 import { House } from '@/types';
 import { Link } from 'react-router-dom';
@@ -20,12 +20,8 @@ const SearchMap = () => {
   const [selectedHouse, setSelectedHouse] = useState<House | null>(null);
   const [showDirections, setShowDirections] = useState(false);
 
-  const housesQuery = useQuery({
-    queryKey: ['houses', 'map'],
-    queryFn: () => api.houses.list({ limit: 100 }),
-  });
-
-  const houses = housesQuery.data?.data ?? [];
+  const housesQuery = useCachedHouses();
+  const houses = housesQuery.houses;
 
   // Handle URL parameters for specific house
   useEffect(() => {
@@ -114,7 +110,7 @@ const SearchMap = () => {
           </p>
         </div>
 
-        {housesQuery.isLoading ? (
+        {housesQuery.isInitialLoad ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>

@@ -10,6 +10,7 @@ import { useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import emailjs from '@emailjs/browser';
+import { CONTACT_EMAIL, contactMailto } from '@/lib/contact';
 import { useSeo } from '@/lib/seo';
 
 const ContactUs = () => {
@@ -87,6 +88,7 @@ const ContactUs = () => {
             <div className="bg-card p-8 rounded-lg border">
               <h2 className="text-2xl font-bold mb-6">Send us a Message</h2>
               <form ref={form} onSubmit={handleSubmit} className="space-y-4">
+                <input type="hidden" name="to_email" value={CONTACT_EMAIL} />
                 <div>
                   <Label htmlFor="name" className="sr-only">Your Name</Label>
                   <Input
@@ -171,7 +173,7 @@ const ContactUs = () => {
                   <div>
                     <h3 className="font-bold text-lg mb-2">Email Us</h3>
                     <p className="text-muted-foreground">
-                      Flowcheq Estate: <a href="mailto:housemedream@gmail.com" className="hover:text-primary transition-colors">housemedream@gmail.com</a><br />
+                      Flowcheq Estate: <a href={contactMailto} className="hover:text-primary transition-colors">{CONTACT_EMAIL}</a><br />
                     </p>
                   </div>
                 </div>

@@ -4,6 +4,7 @@ import { Home } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import {
   Card,
@@ -163,9 +164,8 @@ const Auth = () => {
                           Forgot password?
                         </Link>
                       </div>
-                      <Input
+                      <PasswordInput
                         id="login-password"
-                        type="password"
                         placeholder="••••••••"
                         value={loginForm.password}
                         onChange={(event) =>
@@ -279,9 +279,8 @@ const Auth = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-password">Password</Label>
-                      <Input
+                      <PasswordInput
                         id="signup-password"
-                        type="password"
                         placeholder="••••••••"
                         value={signupForm.password}
                         onChange={(event) =>
@@ -295,9 +294,8 @@ const Auth = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-confirm">Confirm Password</Label>
-                      <Input
+                      <PasswordInput
                         id="signup-confirm"
-                        type="password"
                         placeholder="••••••••"
                         value={signupForm.confirmPassword}
                         onChange={(event) =>
@@ -313,16 +311,11 @@ const Auth = () => {
                       {signupLoading ? 'Creating account...' : 'Create Account'}
                     </Button>
                     
-                    <div className="text-center pt-4 border-t space-y-3">
-                      <p className="text-sm text-muted-foreground">Partner registrations</p>
+                    <div className="text-center pt-4 border-t">
+                      <p className="text-sm text-muted-foreground mb-2">Are you a real estate company?</p>
                       <Link to="/auth/company">
                         <Button variant="outline" type="button" className="w-full">
-                          Register as a Real Estate Company
-                        </Button>
-                      </Link>
-                      <Link to="/auth/law-firm">
-                        <Button variant="outline" type="button" className="w-full">
-                          Register as a Law Firm Partner
+                          Register as a Company
                         </Button>
                       </Link>
                     </div>

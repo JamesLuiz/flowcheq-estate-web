@@ -1,10 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Loader2, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { api } from '@/lib/api';
 import { formatPriceNgn } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { getApiBaseUrl } from '@/lib/api';
+import {
+  isPromotionsCacheStale,
+  readPromotionsCache,
+  writePromotionsCache,
+  PROMOTIONS_STALE_MS,
+} from '@/lib/listingCache';
 
 interface Promotion {
   id: string;
@@ -28,49 +34,63 @@ interface Promotion {
   clicks: number;
 }
 
+async function fetchActivePromotions(): Promise<Promotion[]> {
+  const response = await fetch(`${getApiBaseUrl()}/promotions/active`);
+  if (!response.ok) return [];
+  const data = (await response.json()) as Promotion[];
+  writePromotionsCache(data);
+  return data;
+}
+
 export const FeaturedBanner = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
+  const cached = readPromotionsCache();
+  const hasCachedPromotions = Boolean(cached?.data?.length);
 
-  const { data: promotions, isLoading } = useQuery({
+  const { data: promotions } = useQuery({
     queryKey: ['active-promotions'],
-    queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/promotions/active`);
-      if (!response.ok) return [];
-      return response.json() as Promise<Promotion[]>;
-    },
-    refetchInterval: 60000, // Refetch every minute
+    queryFn: fetchActivePromotions,
+    initialData: hasCachedPromotions ? (cached!.data as Promotion[]) : undefined,
+    staleTime: PROMOTIONS_STALE_MS,
+    gcTime: 1000 * 60 * 60 * 24,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: !hasCachedPromotions,
+    refetchInterval: hasCachedPromotions ? false : PROMOTIONS_STALE_MS,
   });
+
+  useEffect(() => {
+    if (!hasCachedPromotions || !isPromotionsCacheStale()) return;
+    void fetchActivePromotions();
+  }, [hasCachedPromotions]);
 
   useEffect(() => {
     if (!promotions || promotions.length === 0 || !autoPlay) return;
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % promotions.length);
-    }, 5000); // Change banner every 5 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [promotions, autoPlay]);
 
   const handleBannerClick = async (promotion: Promotion) => {
-    // Track click
     try {
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/promotions/${promotion.id}/click`, {
+      await fetch(`${getApiBaseUrl()}/promotions/${promotion.id}/click`, {
         method: 'POST',
       });
-    } catch (error) {
-      console.error('Failed to track click:', error);
+    } catch {
+      // non-blocking analytics
     }
 
-    // Open WhatsApp if agent has phone
     if (promotion.house?.agent?.phone) {
       const phone = promotion.house.agent.phone.replace(/[^0-9]/g, '');
       const message = encodeURIComponent(
-        `Hello! I'm interested in this property: ${promotion.house.title} - ${promotion.house.location}`
+        `Hello! I'm interested in this property: ${promotion.house.title} - ${promotion.house.location}`,
       );
       window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
     } else {
-      // Fallback to property page
       window.location.href = `/house/${promotion.houseId}`;
     }
   };
@@ -78,7 +98,7 @@ export const FeaturedBanner = () => {
   const goToSlide = (index: number) => {
     setCurrentIndex(index);
     setAutoPlay(false);
-    setTimeout(() => setAutoPlay(true), 10000); // Resume autoplay after 10 seconds
+    setTimeout(() => setAutoPlay(true), 10000);
   };
 
   const nextSlide = () => {
@@ -95,14 +115,6 @@ export const FeaturedBanner = () => {
     setTimeout(() => setAutoPlay(true), 10000);
   };
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-[400px] bg-muted flex items-center justify-center rounded-lg">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   if (!promotions || promotions.length === 0) {
     return null;
   }
@@ -111,7 +123,6 @@ export const FeaturedBanner = () => {
 
   return (
     <div className="relative w-full h-[400px] md:h-[500px] rounded-lg overflow-hidden shadow-lg group">
-      {/* Banner Image */}
       <div
         className="absolute inset-0 bg-cover bg-center transition-transform duration-500"
         style={{
@@ -122,7 +133,6 @@ export const FeaturedBanner = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
       </div>
 
-      {/* Content */}
       <div className="relative z-10 h-full flex flex-col justify-end p-6 md:p-10 text-white">
         <div className="max-w-2xl">
           <div className="mb-2">
@@ -152,7 +162,6 @@ export const FeaturedBanner = () => {
         </div>
       </div>
 
-      {/* Navigation Arrows */}
       {promotions.length > 1 && (
         <>
           <button
@@ -172,7 +181,6 @@ export const FeaturedBanner = () => {
         </>
       )}
 
-      {/* Dots Indicator */}
       {promotions.length > 1 && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
           {promotions.map((_, index) => (
@@ -181,9 +189,7 @@ export const FeaturedBanner = () => {
               onClick={() => goToSlide(index)}
               className={cn(
                 'w-2 h-2 rounded-full transition-all',
-                index === currentIndex
-                  ? 'bg-white w-8'
-                  : 'bg-white/50 hover:bg-white/75'
+                index === currentIndex ? 'bg-white w-8' : 'bg-white/50 hover:bg-white/75',
               )}
               aria-label={`Go to slide ${index + 1}`}
             />
@@ -193,4 +199,3 @@ export const FeaturedBanner = () => {
     </div>
   );
 };
-

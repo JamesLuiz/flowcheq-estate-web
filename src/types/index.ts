@@ -92,4 +92,5 @@ export interface FilterParams {
   limit?: number;
   listingType?: 'rent' | 'buy';
   amenities?: string[];
+  shared?: boolean;
 }

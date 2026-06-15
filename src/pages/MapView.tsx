@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { MapPin, Bed, Bath, Maximize, Loader2, Filter, Navigation } from 'lucide-react';
-import {
-  getGoogleMapsApiKey,
-  GOOGLE_MAPS_LIBRARIES,
-  GOOGLE_MAPS_LOADER_ID,
-} from '@/lib/googleMaps';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { api } from '@/lib/api';
+import { useCachedHouses } from '@/hooks/useCachedHouses';
 import { formatPriceNgn } from '@/lib/format';
 import { House } from '@/types';
 import { Link } from 'react-router-dom';
@@ -42,19 +37,14 @@ const MapView = () => {
   const [locationFilter, setLocationFilter] = useState<string>('all');
   const [userPosition, setUserPosition] = useState<google.maps.LatLngLiteral | null>(null);
 
-  const googleMapsApiKey = getGoogleMapsApiKey();
+  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { isLoaded } = useJsApiLoader({
-    id: GOOGLE_MAPS_LOADER_ID,
-    googleMapsApiKey,
-    libraries: GOOGLE_MAPS_LIBRARIES,
+    id: 'google-map-script',
+    googleMapsApiKey: googleMapsApiKey ?? '',
   });
 
-  const housesQuery = useQuery({
-    queryKey: ['map-houses'],
-    queryFn: () => api.houses.list(),
-  });
-
-  const houses = housesQuery.data?.data ?? [];
+  const housesQuery = useCachedHouses();
+  const houses = housesQuery.houses;
   const locations = useMemo(() => {
     const unique = new Set<string>();
     houses.forEach((house) => {
@@ -127,7 +117,7 @@ const MapView = () => {
               </CardContent>
             </Card>
           </div>
-        ) : !isLoaded || housesQuery.isLoading ? (
+        ) : !isLoaded || housesQuery.isInitialLoad ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>

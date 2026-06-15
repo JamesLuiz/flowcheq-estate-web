@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Linkedin, Phone, Mail, MapPin } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { CONTACT_EMAIL, contactMailto } from '@/lib/contact';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -69,8 +70,8 @@ export const Footer = () => {
               {/* FIX 3: Added justify-center md:justify-start to list items */}
               <li className="flex items-center justify-center md:justify-start gap-2 text-sm">
                 <Mail className="h-4 w-4 text-primary" />
-                <a href="mailto:housemedream@gmail.com" className="text-muted-foreground hover:text-primary transition-colors">
-                  housemedream@gmail.com
+                <a href={contactMailto} className="text-muted-foreground hover:text-primary transition-colors">
+                  {CONTACT_EMAIL}
                 </a>
               </li>
               <li className="text-sm text-muted-foreground">

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
@@ -11,6 +11,7 @@ import { FilterParams, House } from '@/types';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, BellRing, Loader2, RotateCcw } from 'lucide-react';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
+import { useCachedHouses } from '@/hooks/useCachedHouses';
 import { api } from '@/lib/api';
 import { useSeo } from '@/lib/seo';
 import { useAuth } from '@/context/AuthContext';
@@ -92,27 +93,42 @@ const Index = () => {
     [filters],
   );
 
-  const housesQuery = useQuery({
-    queryKey: ['houses', queryFilters],
-    queryFn: () => api.houses.list(queryFilters),
-    retry: 1,
-    refetchOnWindowFocus: false,
-  });
-
-  const apiHouses = housesQuery.data?.data ?? [];
+  const housesQuery = useCachedHouses(queryFilters);
+  const apiHouses = housesQuery.houses;
   const useDevPlaceholders =
     import.meta.env.DEV &&
     !housesQuery.isError &&
-    !housesQuery.isLoading &&
+    !housesQuery.isInitialLoad &&
     apiHouses.length === 0 &&
     !hasActiveFilters;
-  const houses = housesQuery.isError
-    ? []
-    : apiHouses.length > 0
-      ? apiHouses
-      : useDevPlaceholders
-        ? (placeholderProperties as House[])
-        : [];
+  const houses = useMemo(() => {
+    const base = housesQuery.isError
+      ? []
+      : apiHouses.length > 0
+        ? apiHouses
+        : useDevPlaceholders
+          ? (placeholderProperties as House[])
+          : [];
+
+    if (!userLocation || hasActiveFilters) {
+      return base;
+    }
+
+    const withDistance = base.map((house) => {
+      const lat = house.coordinates?.lat;
+      const lng = house.coordinates?.lng;
+      if (lat == null || lng == null) {
+        return { house, distance: Number.POSITIVE_INFINITY };
+      }
+      const dLat = lat - userLocation.lat;
+      const dLng = lng - userLocation.lng;
+      return { house, distance: dLat * dLat + dLng * dLng };
+    });
+
+    return withDistance
+      .sort((a, b) => a.distance - b.distance)
+      .map((entry) => entry.house);
+  }, [apiHouses, housesQuery.isError, hasActiveFilters, useDevPlaceholders, userLocation]);
   const featuredHouses = houses.filter((house) => house.featured);
   const showingPlaceholders = useDevPlaceholders;
 
@@ -270,7 +286,7 @@ const Index = () => {
             <SearchFilters onFilterChange={setFilters} />
           </div>
 
-          {housesQuery.isLoading ? (
+          {housesQuery.isInitialLoad ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
