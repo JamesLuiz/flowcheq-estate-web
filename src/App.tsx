@@ -26,6 +26,7 @@ import SearchMap from "./pages/SearchMap";
 import Auth from "./pages/Auth";
 import VerifyEmail from "./pages/VerifyEmail";
 import CompanyAuth from "./pages/CompanyAuth";
+import LawFirmAuth from "./pages/LawFirmAuth";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ContactUs from "./pages/ContactUs";
@@ -150,6 +151,8 @@ const App = () => {
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/verify-email" element={<VerifyEmail />} />
               <Route path="/auth/company" element={<CompanyAuth />} />
+              <Route path="/auth/law-firm" element={<LawFirmAuth />} />
+              <Route path="/auth/lawfirm" element={<LawFirmAuth />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/partners" element={<Partners />} />
