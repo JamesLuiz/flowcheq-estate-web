@@ -62,12 +62,18 @@ const LawyerDashboard = () => {
     queryFn: () => api.legalReview.listPending(),
   });
 
+  const statsQuery = useQuery({
+    queryKey: ['legal-review-stats'],
+    queryFn: () => api.legalReview.getStats(),
+  });
+
   const approveMutation = useMutation({
     mutationFn: () => api.legalReview.approve(selected!.id, cofo),
     onSuccess: () => {
       toast({ title: 'Listing approved', description: 'Property is now verified and can go live.' });
       closeDialog();
       queryClient.invalidateQueries({ queryKey: ['legal-review-pending'] });
+      queryClient.invalidateQueries({ queryKey: ['legal-review-stats'] });
     },
     onError: (e: Error) => toast({ variant: 'destructive', title: 'Approval failed', description: e.message }),
   });
@@ -78,6 +84,7 @@ const LawyerDashboard = () => {
       toast({ title: 'Listing rejected' });
       closeDialog();
       queryClient.invalidateQueries({ queryKey: ['legal-review-pending'] });
+      queryClient.invalidateQueries({ queryKey: ['legal-review-stats'] });
     },
     onError: (e: Error) => toast({ variant: 'destructive', title: 'Rejection failed', description: e.message }),
   });
@@ -116,6 +123,41 @@ const LawyerDashboard = () => {
               Review C of O and ownership documents. Only lawyer-approved listings go live.
             </p>
           </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Pending review</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statsQuery.data?.pending ?? listings.length}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Approved</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statsQuery.data?.approved ?? '—'}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statsQuery.data?.rejected ?? '—'}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Total processed</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statsQuery.data?.total ?? '—'}</div>
+            </CardContent>
+          </Card>
         </div>
 
         {pendingQuery.isLoading ? (

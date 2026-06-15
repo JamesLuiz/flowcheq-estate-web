@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, CheckCircle, XCircle, Loader2, ArrowLeft, Eye, FileText, 
-  Image as ImageIcon, Megaphone, Users, TrendingUp, Ban, RefreshCw, CalendarCheck, Calendar, Mail, Phone, User, DollarSign, Percent, Settings, Image, Home, CreditCard
+  Image as ImageIcon, Megaphone, Users, TrendingUp, Ban, RefreshCw, CalendarCheck, Calendar, Mail, Phone, User, DollarSign, Percent, Settings, Image, Home, CreditCard, Scale
 } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,8 @@ import { AgentsManager } from '@/components/admin/AgentsManager';
 import { PropertiesManager } from '@/components/admin/PropertiesManager';
 import { DisbursementsManager } from '@/components/admin/DisbursementsManager';
 import { PartnerLeadsManager } from '@/components/admin/PartnerLeadsManager';
+import { LawFirmsManager } from '@/components/admin/LawFirmsManager';
+import { OpsOverview } from '@/components/admin/OpsOverview';
 import { Input } from '@/components/ui/input';
 
 interface Verification {
@@ -370,90 +372,22 @@ const Admin = () => {
         <div className="mb-6 md:mb-8">
           <h1 className="text-2xl md:text-4xl font-bold mb-2">Admin Dashboard</h1>
           <p className="text-muted-foreground text-sm md:text-base">
-            Manage verifications, promotions, and platform settings
+            Platform operations — agents, landlords, law firms, listings, and revenue
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6 md:mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">Pending</span> Verifications
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{pendingVerifications}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Megaphone className="h-4 w-4" />
-                Active Promotions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{activePromotions}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                <span className="hidden sm:inline">Total</span> Revenue
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {adminStatsQuery.isLoading ? (
-                <div className="flex items-center justify-center py-2">
-                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                </div>
-              ) : (
-                <div className="text-2xl font-bold">{formatPriceNgn(adminStatsQuery.data?.totalPlatformRevenue ?? totalPromotionRevenue)}</div>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4" />
-                Total Agents
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {agentsQuery.isLoading ? (
-                <div className="flex items-center justify-center py-2">
-                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                </div>
-              ) : (
-                <div className="text-2xl font-bold">{totalAgents}</div>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" />
-                Verified Agents
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {verifiedAgentsQuery.isLoading ? (
-                <div className="flex items-center justify-center py-2">
-                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                </div>
-              ) : (
-                <div className="text-2xl font-bold">{verifiedAgents}</div>
-              )}
-            </CardContent>
-          </Card>
+        <div className="mb-6 md:mb-8">
+          <OpsOverview
+            stats={adminStatsQuery.data}
+            isLoading={adminStatsQuery.isLoading}
+            pendingVerifications={pendingVerifications}
+            activePromotions={activePromotions}
+          />
         </div>
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-7 max-w-6xl">
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 max-w-6xl">
             <TabsTrigger value="verifications" className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Verifications</span>
@@ -488,6 +422,11 @@ const Admin = () => {
               <Home className="h-4 w-4" />
               <span className="hidden sm:inline">Properties</span>
               <span className="sm:hidden">Props</span>
+            </TabsTrigger>
+            <TabsTrigger value="law-firms" className="flex items-center gap-2">
+              <Scale className="h-4 w-4" />
+              <span className="hidden sm:inline">Law firms</span>
+              <span className="sm:hidden">Legal</span>
             </TabsTrigger>
             <TabsTrigger value="partners" className="flex items-center gap-2">
               <User className="h-4 w-4" />
@@ -976,6 +915,10 @@ const Admin = () => {
           {/* Properties Tab */}
           <TabsContent value="properties" className="space-y-4">
             <PropertiesManager />
+          </TabsContent>
+
+          <TabsContent value="law-firms" className="space-y-4">
+            <LawFirmsManager />
           </TabsContent>
 
           <TabsContent value="partners" className="space-y-4">

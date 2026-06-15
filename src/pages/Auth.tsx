@@ -313,11 +313,16 @@ const Auth = () => {
                       {signupLoading ? 'Creating account...' : 'Create Account'}
                     </Button>
                     
-                    <div className="text-center pt-4 border-t">
-                      <p className="text-sm text-muted-foreground mb-2">Are you a real estate company?</p>
+                    <div className="text-center pt-4 border-t space-y-3">
+                      <p className="text-sm text-muted-foreground">Partner registrations</p>
                       <Link to="/auth/company">
                         <Button variant="outline" type="button" className="w-full">
-                          Register as a Company
+                          Register as a Real Estate Company
+                        </Button>
+                      </Link>
+                      <Link to="/auth/law-firm">
+                        <Button variant="outline" type="button" className="w-full">
+                          Register as a Law Firm Partner
                         </Button>
                       </Link>
                     </div>

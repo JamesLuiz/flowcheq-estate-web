@@ -229,6 +229,54 @@ const authApi = {
     
     return (await response.json()) as { message: string };
   },
+  registerLawFirm: async (payload: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+    bio?: string;
+    lawFirmDetails: {
+      firmName: string;
+      barRegistrationNumber: string;
+      businessEmail: string;
+      businessPhone: string;
+      address: string;
+      city: string;
+      state: string;
+      website?: string;
+    };
+    practicingCertificate: File;
+  }) => {
+    const { practicingCertificate, ...restPayload } = payload;
+
+    const formData = new FormData();
+    formData.append('practicingCertificate', practicingCertificate);
+    formData.append('data', JSON.stringify(restPayload));
+
+    const url = `${getApiBaseUrl()}/auth/register-law-firm`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = response.statusText;
+      try {
+        const errorBody = await response.json();
+        if (Array.isArray(errorBody?.message)) {
+          errorMessage = errorBody.message.join(', ');
+        } else if (typeof errorBody?.message === 'string') {
+          errorMessage = errorBody.message;
+        }
+      } catch {
+        // ignore
+      }
+      throw new Error(errorMessage);
+    }
+
+    return (await response.json()) as { message: string };
+  },
   login: (payload: { email: string; password: string }) =>
     request<{ accessToken: string; user: Agent }>('/auth/login', 'POST', {
       body: payload,
@@ -741,10 +789,27 @@ const adminApi = {
   getStats: () => request<{
     totalAgents: number;
     verifiedAgents: number;
+    totalLandlords: number;
+    totalLawFirms: number;
+    approvedLawFirms: number;
+    pendingLawFirms: number;
+    pendingLegalReviews: number;
+    approvedLegalReviews: number;
+    rejectedLegalReviews: number;
+    totalProperties: number;
+    activeProperties: number;
     totalPromotionRevenue: number;
     totalViewingPlatformRevenue: number;
     totalPlatformRevenue: number;
   }>('/admin/stats', 'GET'),
+  getLawFirms: (status?: 'pending' | 'approved' | 'rejected') => {
+    const params = status ? { status } : {};
+    return request<{ data: Array<Record<string, unknown>> }>('/admin/law-firms', 'GET', { params });
+  },
+  updateLawFirmStatus: (
+    firmId: string,
+    body: { status: 'approved' | 'rejected'; rejectionReason?: string },
+  ) => request<Record<string, unknown>>(`/admin/law-firms/${firmId}`, 'PATCH', { body }),
   // Unverified agents
   getUnverifiedAgents: () => request<{ data: Agent[] }>('/admin/agents/unverified', 'GET'),
   sendBulkEmailToUnverifiedAgents: (message?: string) =>
@@ -1006,6 +1071,11 @@ const partnersApi = {
 };
 
 const legalReviewApi = {
+  getStats: () =>
+    request<{ pending: number; approved: number; rejected: number; total: number }>(
+      '/legal-review/stats',
+      'GET',
+    ),
   listPending: () => request<any[]>('/legal-review/pending', 'GET'),
   getOne: (houseId: string) => request<any>(`/legal-review/${houseId}`, 'GET'),
   checkCertificate: (certificateNumber: string, excludeHouseId?: string) =>
