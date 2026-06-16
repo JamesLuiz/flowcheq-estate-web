@@ -48,6 +48,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { getDashboardPathForRole, requiresYouverifyAccount } from '@/lib/roles';
+import { AccountVerificationBanner } from '@/components/AccountVerificationBanner';
 import { api } from '@/lib/api';
 import { formatPriceNgn } from '@/lib/format';
 import { NIGERIAN_BANKS } from '@/data/nigerianBanks';
@@ -443,6 +444,7 @@ const AgentWallet = () => {
       <Navbar />
 
       <main className="flex-1 container mx-auto px-4 py-8">
+        <AccountVerificationBanner className="mb-6" />
         <Link to={getDashboardPathForRole(user?.role)}>
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
