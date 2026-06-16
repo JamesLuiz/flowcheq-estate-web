@@ -2,7 +2,7 @@
   "name": "Flowcheq Estate",
   "short_name": "Flowcheq",
   "description": "Verified property marketplace and agent tools for Abuja, Nigeria",
-  "start_url": "/agents/app",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

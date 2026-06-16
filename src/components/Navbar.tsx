@@ -1,4 +1,4 @@
-import { Home, LogIn, LogOut, Menu, User, X, Shield, MessageCircle } from 'lucide-react';
+import { Home, LogIn, LogOut, Menu, User, X, Shield, MessageCircle, Smartphone } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { useState, useEffect } from 'react';
@@ -78,6 +78,9 @@ export const Navbar = () => {
             </Link>
             <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
               Contact
+            </Link>
+            <Link to="/agents/app" className="text-foreground hover:text-primary transition-colors">
+              Install App
             </Link>
             <ThemeToggle />
             {isAuthenticated ? (
@@ -232,6 +235,14 @@ export const Navbar = () => {
               onClick={() => setMobileMenuOpen(false)}
             >
               Contact
+            </Link>
+            <Link
+              to="/agents/app"
+              className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Smartphone className="h-4 w-4" />
+              Install App
             </Link>
             {isAuthenticated ? (
               <>

@@ -37,6 +37,7 @@ import ViewingPaymentCallback from "./pages/ViewingPaymentCallback";
 import AgentWallet from "./pages/AgentWallet";
 import AccountVerification from "./pages/AccountVerification";
 import NotFound from "./pages/NotFound";
+import AgentsAppDownload from "./pages/AgentsAppDownload";
 import { AuthProvider } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
 
@@ -173,6 +174,7 @@ const App = () => {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/partners" element={<Partners />} />
               <Route path="/contact" element={<ContactUs />} />
+              <Route path="/agents/app" element={<AgentsAppDownload />} />
               <Route path="/promotions/setup" element={<PromotionSetup />} />
               <Route path="/promotions/callback" element={<PromotionCallback />} />
               <Route path="/viewings/payment/callback" element={<ViewingPaymentCallback />} />

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useSeo } from '@/lib/seo';
+import { PwaInstallPrompt } from '@/components/PwaInstallPrompt';
 
 const APK_URL =
   import.meta.env.VITE_ANDROID_APK_URL ||
@@ -40,6 +41,7 @@ export default function AgentsAppDownload() {
         </section>
 
         <section className="container max-w-3xl py-12 space-y-6">
+          <PwaInstallPrompt />
           <Alert>
             <ShieldCheck className="h-4 w-4" />
             <AlertTitle>Agent account required</AlertTitle>
