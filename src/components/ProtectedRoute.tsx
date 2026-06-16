@@ -10,6 +10,8 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
+export type { ProtectedRouteProps };
+
 export function ProtectedRoute({
   children,
   roles,

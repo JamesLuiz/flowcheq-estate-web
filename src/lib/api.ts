@@ -1101,64 +1101,47 @@ const legalReviewApi = {
 };
 
 const youverifyApi = {
-  verifyAccountIdentity: async (payload: {
-    documentType: 'nin' | 'driver_license';
-    idNumber: string;
-    firstName: string;
-    lastName: string;
-    dateOfBirth?: string;
-    isSubjectConsent: boolean;
-    selfie: File;
-  }) => {
-    const formData = new FormData();
-    formData.append('documentType', payload.documentType);
-    formData.append('idNumber', payload.idNumber);
-    formData.append('firstName', payload.firstName);
-    formData.append('lastName', payload.lastName);
-    if (payload.dateOfBirth) formData.append('dateOfBirth', payload.dateOfBirth);
-    formData.append('isSubjectConsent', String(payload.isSubjectConsent));
-    formData.append('selfie', payload.selfie);
-
-    const token = getAuthToken();
-    const url = `${getApiBaseUrl()}/youverify/account/verify`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: formData,
-    });
-
-    if (!response.ok) {
-      let errorMessage = response.statusText;
-      try {
-        const errorBody = await response.json();
-        if (typeof errorBody?.message === 'string') {
-          errorMessage = errorBody.message;
-        } else if (Array.isArray(errorBody?.message)) {
-          errorMessage = errorBody.message.join(', ');
-        }
-      } catch {
-        // ignore
-      }
-      throw new Error(errorMessage);
-    }
-
-    return (await response.json()) as {
-      success?: boolean;
-      verified?: boolean;
-      alreadyVerified?: boolean;
-      reference?: string;
-      message?: string;
-    };
-  },
-  /** @deprecated Use verifyAccountIdentity */
-  initiateAccountVerification: () =>
+  getAccountStatus: () =>
     request<{
-      reference?: string;
-      checkoutUrl?: string;
-      status?: string;
-      message?: string;
+      required: boolean;
+      youverifyStatus?: string;
+      verificationFee?: number;
+      feePaid?: boolean;
+      paymentStatus?: string;
+      paymentEvents?: Array<{ status: string; at: string; note?: string }>;
+      checkoutReference?: string;
+      walletBalance?: number;
+      virtualAccount?: {
+        accountNumber?: string;
+        accountName?: string;
+        bankName?: string;
+        bankCode?: string;
+        status?: string;
+      } | null;
+      sdkReady?: boolean;
+      sdkConfig?: {
+        vFormId?: string;
+        publicMerchantKey?: string;
+        sandboxEnvironment?: boolean;
+        metadata?: Record<string, unknown>;
+      } | null;
+    }>('/youverify/account/status', 'GET'),
+  payVerificationFee: () =>
+    request<{
+      success: boolean;
+      alreadyPaid?: boolean;
       alreadyVerified?: boolean;
-    }>('/youverify/account/initiate', 'POST'),
+      paymentLink?: string;
+      txRef?: string;
+      amount?: number;
+      message?: string;
+    }>('/youverify/account/pay-fee', 'POST'),
+  completeSdkVerification: (payload: Record<string, unknown>) =>
+    request<{ success: boolean; verified?: boolean; alreadyVerified?: boolean; message?: string }>(
+      '/youverify/account/sdk-complete',
+      'POST',
+      { body: payload },
+    ),
 };
 
 export interface AppNotification {

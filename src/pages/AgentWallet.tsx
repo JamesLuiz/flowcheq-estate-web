@@ -47,6 +47,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import { getDashboardPathForRole, requiresYouverifyAccount } from '@/lib/roles';
 import { api } from '@/lib/api';
 import { formatPriceNgn } from '@/lib/format';
 import { NIGERIAN_BANKS } from '@/data/nigerianBanks';
@@ -413,7 +414,7 @@ const AgentWallet = () => {
     );
   };
 
-  if (!isAuthenticated || (user?.role !== 'agent' && user?.role !== 'landlord')) {
+  if (!isAuthenticated || !requiresYouverifyAccount(user?.role)) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -423,10 +424,11 @@ const AgentWallet = () => {
               <Wallet className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
               <h2 className="text-xl font-semibold mb-2">Access Restricted</h2>
               <p className="text-muted-foreground mb-4">
-                Only agents and landlords can access the wallet.
+                Wallet access is available for verified account types. Please log in with your
+                account.
               </p>
               <Link to="/auth">
-                <Button>Login as Agent</Button>
+                <Button>Login</Button>
               </Link>
             </CardContent>
           </Card>
@@ -441,7 +443,7 @@ const AgentWallet = () => {
       <Navbar />
 
       <main className="flex-1 container mx-auto px-4 py-8">
-        <Link to={user?.role === 'agent' ? '/agent/dashboard' : '/landlord/dashboard'}>
+        <Link to={getDashboardPathForRole(user?.role)}>
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Dashboard

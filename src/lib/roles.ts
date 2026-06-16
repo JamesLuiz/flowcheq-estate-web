@@ -41,6 +41,16 @@ export function isYouverifyVerified(user?: { youverifyStatus?: string | null } |
   return user?.youverifyStatus === 'verified';
 }
 
+export function getPostLoginPath(user?: {
+  role?: string | null;
+  youverifyStatus?: string | null;
+} | null): string {
+  if (user && requiresYouverifyAccount(user.role) && !isYouverifyVerified(user)) {
+    return '/verify-account';
+  }
+  return getDashboardPathForRole(user?.role);
+}
+
 /** Default dashboard route after login for each role */
 export function getDashboardPathForRole(role?: string | null): string {
   if (isAdminRole(role)) return '/admin';
@@ -50,8 +60,10 @@ export function getDashboardPathForRole(role?: string | null): string {
   return '/user-dashboard';
 }
 
-export function getWalletPathForRole(role?: string | null): string {
-  if (isAgentRole(role)) return '/agent/wallet';
-  if (isListingOwnerRole(role)) return '/landlord/wallet';
-  return '/user-dashboard';
+export function canAccessWallet(role?: string | null): boolean {
+  return requiresYouverifyAccount(role);
+}
+
+export function getWalletPathForRole(_role?: string | null): string {
+  return '/wallet';
 }

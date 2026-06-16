@@ -17,9 +17,9 @@ import SharedProperties from "./pages/SharedProperties";
 import Messages from "./pages/Messages";
 import Dashboard from "./pages/Dashboard";
 import UserDashboard from "./pages/UserDashboard";
-import WalletRedirect from "./pages/WalletRedirect";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { LISTING_OWNER_ROLES, AGENT_ROLES, ADMIN_ROLES, LAWYER_ROLES } from "./lib/roles";
+import { VerificationRequiredRoute } from "./components/VerificationRequiredRoute";
+import { LISTING_OWNER_ROLES, AGENT_ROLES, ADMIN_ROLES, LAWYER_ROLES, YOUVERIFY_ACCOUNT_ROLES } from "./lib/roles";
 import PropertyComparison from "./pages/PropertyComparison";
 import MapView from "./pages/MapView";
 import SearchMap from "./pages/SearchMap";
@@ -35,6 +35,7 @@ import PromotionSetup from "./pages/PromotionSetup";
 import PromotionCallback from "./pages/PromotionCallback";
 import ViewingPaymentCallback from "./pages/ViewingPaymentCallback";
 import AgentWallet from "./pages/AgentWallet";
+import AccountVerification from "./pages/AccountVerification";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
@@ -101,32 +102,40 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/verify-account" element={<AccountVerification />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route
                 path="/landlord/dashboard"
                 element={
-                  <ProtectedRoute roles={LISTING_OWNER_ROLES}>
+                  <VerificationRequiredRoute roles={LISTING_OWNER_ROLES}>
                     <LandlordDashboard />
-                  </ProtectedRoute>
+                  </VerificationRequiredRoute>
                 }
               />
               <Route
                 path="/agent/dashboard"
                 element={
-                  <ProtectedRoute roles={AGENT_ROLES}>
+                  <VerificationRequiredRoute roles={AGENT_ROLES}>
                     <AgentDashboard />
-                  </ProtectedRoute>
+                  </VerificationRequiredRoute>
                 }
               />
               <Route
                 path="/lawyer/dashboard"
                 element={
-                  <ProtectedRoute roles={[...LAWYER_ROLES, ...ADMIN_ROLES]}>
+                  <VerificationRequiredRoute roles={[...LAWYER_ROLES, ...ADMIN_ROLES]}>
                     <LawyerDashboard />
+                  </VerificationRequiredRoute>
+                }
+              />
+              <Route
+                path="/wallet"
+                element={
+                  <ProtectedRoute roles={[...YOUVERIFY_ACCOUNT_ROLES]}>
+                    <AgentWallet />
                   </ProtectedRoute>
                 }
               />
-              <Route path="/wallet" element={<WalletRedirect />} />
               <Route
                 path="/landlord/wallet"
                 element={
@@ -143,7 +152,14 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/user-dashboard" element={<UserDashboard />} />
+              <Route
+                path="/user-dashboard"
+                element={
+                  <VerificationRequiredRoute>
+                    <UserDashboard />
+                  </VerificationRequiredRoute>
+                }
+              />
               <Route path="/profile/edit" element={<ProfileEdit />} />
               <Route path="/compare" element={<PropertyComparison />} />
               <Route path="/map" element={<MapView />} />

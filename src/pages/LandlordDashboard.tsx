@@ -23,7 +23,7 @@ import { LandlordBankSection } from '@/components/landlord/LandlordBankSection';
 import { LandlordCreateListingDialog } from '@/components/landlord/LandlordCreateListingDialog';
 import { LandlordEditListingDialog } from '@/components/landlord/LandlordEditListingDialog';
 import { LandlordPinResetDialog } from '@/components/landlord/LandlordPinResetDialog';
-import { YouverifyAccountCard } from '@/components/YouverifyAccountCard';
+import { VerifyAccountBanner } from '@/components/VerifyAccountBanner';
 
 const initialFormState = initialLandlordListingFormState;
 
@@ -485,7 +485,7 @@ const LandlordDashboard = () => {
         />
 
         <div className="mb-6">
-          <YouverifyAccountCard />
+          <VerifyAccountBanner />
         </div>
 
         <div className="mb-8">

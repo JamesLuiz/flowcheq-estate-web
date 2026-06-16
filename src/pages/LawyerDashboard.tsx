@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
-import { YouverifyAccountCard } from '@/components/YouverifyAccountCard';
+import { VerifyAccountBanner } from '@/components/VerifyAccountBanner';
 
 type PendingListing = {
   id: string;
@@ -127,7 +127,7 @@ const LawyerDashboard = () => {
         </div>
 
         <div className="mb-8">
-          <YouverifyAccountCard />
+          <VerifyAccountBanner />
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

@@ -36,7 +36,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { YouverifyAccountCard } from '@/components/YouverifyAccountCard';
+import { VerifyAccountBanner } from '@/components/VerifyAccountBanner';
 import { format } from 'date-fns';
 
 const LEAD_STATUSES = ['new', 'contacted', 'interested', 'closed'] as const;
@@ -141,7 +141,7 @@ const AgentDashboard = () => {
         </div>
 
         <div className="mb-8">
-          <YouverifyAccountCard />
+          <VerifyAccountBanner />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
