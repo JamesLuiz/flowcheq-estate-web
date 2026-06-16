@@ -1,0 +1,62 @@
+/* YouVerify SDK is appended to document.body — these rules apply after we reparent into .youverify-sdk-host */
+
+.youverify-sdk-host {
+  position: relative;
+  min-height: 28rem;
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  overflow: hidden;
+}
+
+.youverify-sdk-host--idle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: linear-gradient(
+    180deg,
+    hsl(var(--card)) 0%,
+    hsl(var(--muted) / 0.35) 100%
+  );
+}
+
+.youverify-sdk-host--active {
+  min-height: 32rem;
+  border-color: hsl(var(--primary) / 0.35);
+  box-shadow: var(--shadow-elegant);
+}
+
+/* Prevent page scroll jump while SDK is open */
+body.youverify-sdk-embedded {
+  overflow: hidden;
+}
+
+/* Fallback if reparent runs late: still brand the fullscreen modal */
+body.youverify-sdk-embedded #yv-sdk-modal {
+  font-family: inherit;
+  color: hsl(var(--foreground));
+}
+
+body.youverify-sdk-embedded #yv-sdk-modal .start-button {
+  border-radius: calc(var(--radius) - 4px) !important;
+  font-weight: 600;
+}
+
+body.youverify-sdk-embedded #yv-sdk-modal .personalization,
+body.youverify-sdk-embedded #yv-sdk-modal .preliminary-content {
+  padding: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .youverify-sdk-host {
+    min-height: 24rem;
+  }
+
+  .youverify-sdk-host--active {
+    min-height: 28rem;
+  }
+}
