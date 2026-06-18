@@ -14,7 +14,9 @@ import {
   Shield,
   TrendingUp,
   FileText,
-  Phone
+  Phone,
+  Wallet,
+  Smartphone
 } from 'lucide-react';
 import { useSeo } from '@/lib/seo';
 
@@ -63,8 +65,8 @@ const AgentGuide = () => {
                   <span className="text-primary font-bold">2</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold">Complete Verification</h3>
-                  <p className="text-muted-foreground">Upload your NIN or Driver's License along with a selfie to get verified. Verified agents get more visibility and trust.</p>
+                  <h3 className="font-semibold">Verify Your Email</h3>
+                  <p className="text-muted-foreground">Check your inbox for a verification link. You must verify your email before proceeding with identity verification.</p>
                 </div>
               </div>
               <div className="flex gap-4">
@@ -72,8 +74,17 @@ const AgentGuide = () => {
                   <span className="text-primary font-bold">3</span>
                 </div>
                 <div>
+                  <h3 className="font-semibold">Complete Identity Verification</h3>
+                  <p className="text-muted-foreground">Pay a one-time verification fee and complete the YouVerify process: enter your NIN and take a live selfie. Verified agents get a badge, more visibility, and access to wallet features.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                  <span className="text-primary font-bold">4</span>
+                </div>
+                <div>
                   <h3 className="font-semibold">Start Listing Properties</h3>
-                  <p className="text-muted-foreground">Once verified, you can add properties with detailed descriptions, images, and pricing.</p>
+                  <p className="text-muted-foreground">Once verified, add properties with detailed descriptions, images, and pricing. Use the mobile app for on-site photo capture with GPS verification.</p>
                 </div>
               </div>
             </CardContent>
@@ -251,6 +262,67 @@ const AgentGuide = () => {
                   <p className="font-medium">Inquiries</p>
                   <p className="text-sm text-muted-foreground">Potential leads and viewing requests</p>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Wallet & Earnings */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
+            <Wallet className="h-6 w-6 text-primary" />
+            Wallet & Earnings
+          </h2>
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <p className="text-muted-foreground">
+                Verified agents get a virtual wallet for receiving and withdrawing earnings:
+              </p>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                <li>View your wallet balance and transaction history</li>
+                <li>Receive payments directly to your virtual account</li>
+                <li>Withdraw to your bank account (set up your bank details first)</li>
+                <li>Set a transaction PIN for secure withdrawals</li>
+                <li>Email OTP verification for each withdrawal</li>
+              </ul>
+              <div className="bg-primary/5 p-4 rounded-lg mt-4">
+                <p className="text-sm font-medium text-primary">Withdrawal Requirements:</p>
+                <ul className="text-sm text-muted-foreground mt-1 list-disc list-inside">
+                  <li>Email must be verified</li>
+                  <li>Identity verification completed</li>
+                  <li>Bank account details saved</li>
+                  <li>Transaction PIN set</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Mobile App */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
+            <Smartphone className="h-6 w-6 text-primary" />
+            Mobile App for Agents
+          </h2>
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <p className="text-muted-foreground">
+                Use the Flowcheq mobile app for on-site property capture:
+              </p>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                <li>Take photos with GPS location embedded for verification</li>
+                <li>Manage your dashboard and listings on the go</li>
+                <li>Access your wallet and track earnings</li>
+                <li>Receive notifications for viewing requests</li>
+              </ul>
+              <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                <a 
+                  href="/agents/app" 
+                  className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  <Smartphone className="h-4 w-4" />
+                  Install Agent App
+                </a>
               </div>
             </CardContent>
           </Card>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
-import { MapPin, Bed, Bath, Maximize, Loader2, Filter, Navigation } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize, Loader2, Filter, Navigation, AlertTriangle } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,11 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { api } from '@/lib/api';
 import { useCachedHouses } from '@/hooks/useCachedHouses';
 import { formatPriceNgn } from '@/lib/format';
 import { House } from '@/types';
 import { Link } from 'react-router-dom';
+import { isGoogleMapsConfigured, GOOGLE_MAPS_LIBRARIES, GOOGLE_MAPS_LOADER_ID } from '@/lib/googleMaps';
 
 const FALLBACK_CENTER = { lat: 9.0765, lng: 7.3986 }; // Abuja
 
@@ -38,9 +38,12 @@ const MapView = () => {
   const [userPosition, setUserPosition] = useState<google.maps.LatLngLiteral | null>(null);
 
   const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
+  const isConfigured = isGoogleMapsConfigured();
+
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: GOOGLE_MAPS_LOADER_ID,
     googleMapsApiKey: googleMapsApiKey ?? '',
+    libraries: GOOGLE_MAPS_LIBRARIES,
   });
 
   const housesQuery = useCachedHouses();
@@ -105,15 +108,31 @@ const MapView = () => {
       <Navbar />
 
       <main className="flex-1 relative">
-        {!googleMapsApiKey ? (
+        {!isConfigured || loadError ? (
           <div className="flex items-center justify-center h-full text-center px-4">
             <Card className="max-w-lg">
               <CardContent className="p-8 space-y-4">
-                <h2 className="text-xl font-semibold">Google Maps API key missing</h2>
+                <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto" />
+                <h2 className="text-xl font-semibold">
+                  {!isConfigured ? 'Google Maps not configured' : 'Google Maps failed to load'}
+                </h2>
                 <p className="text-muted-foreground">
-                  Set <code className="bg-muted px-2 py-1 rounded">VITE_GOOGLE_MAPS_API_KEY</code>{' '}
-                  in your environment variables to enable the interactive map.
+                  {!isConfigured ? (
+                    <>
+                      Set <code className="bg-muted px-2 py-1 rounded">VITE_GOOGLE_MAPS_API_KEY</code>{' '}
+                      in your environment variables to enable the interactive map.
+                    </>
+                  ) : (
+                    <>
+                      This could be due to billing not enabled, API restrictions, or missing APIs.
+                      Please check your Google Cloud Console configuration.
+                    </>
+                  )}
                 </p>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>Required APIs: Maps JavaScript API, Places API</p>
+                  <p>Billing must be enabled on your Google Cloud project</p>
+                </div>
               </CardContent>
             </Card>
           </div>

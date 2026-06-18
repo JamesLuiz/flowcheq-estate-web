@@ -9,6 +9,7 @@ import { Loader2, Navigation, Satellite } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   getGoogleMapsApiKey,
+  isGoogleMapsConfigured,
   GOOGLE_MAPS_LIBRARIES,
   GOOGLE_MAPS_LOADER_ID,
 } from '@/lib/googleMaps';
@@ -63,7 +64,8 @@ export function GooglePropertyMap({
   resolvedAddressLabel,
 }: GooglePropertyMapProps) {
   const apiKey = getGoogleMapsApiKey();
-  const { isLoaded } = useJsApiLoader({
+  const isConfigured = isGoogleMapsConfigured();
+  const { isLoaded, loadError } = useJsApiLoader({
     id: GOOGLE_MAPS_LOADER_ID,
     googleMapsApiKey: apiKey,
     libraries: GOOGLE_MAPS_LIBRARIES,
@@ -100,11 +102,13 @@ export function GooglePropertyMap({
     }
   }, [allMarkers]);
 
-  if (!apiKey) {
+  if (!isConfigured || loadError) {
     return (
-      <div className={`flex items-center justify-center rounded-lg border bg-muted/30 ${className}`}>
+      <div className={`flex flex-col items-center justify-center rounded-lg border bg-muted/30 ${className}`}>
         <p className="text-sm text-muted-foreground px-4 text-center">
-          Set <code className="bg-muted px-1 rounded">VITE_GOOGLE_MAPS_API_KEY</code> to show Google Maps.
+          {!isConfigured
+            ? <>Set <code className="bg-muted px-1 rounded">VITE_GOOGLE_MAPS_API_KEY</code> to show Google Maps.</>
+            : 'Google Maps failed to load. Check API key and billing in Google Cloud Console.'}
         </p>
       </div>
     );

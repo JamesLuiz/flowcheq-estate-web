@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   getGoogleMapsApiKey,
+  isGoogleMapsConfigured,
   GOOGLE_MAPS_LIBRARIES,
   GOOGLE_MAPS_LOADER_ID,
   parseGooglePlace,
@@ -27,6 +28,7 @@ export function PlacesAddressPicker({
   disabled,
 }: PlacesAddressPickerProps) {
   const apiKey = getGoogleMapsApiKey();
+  const isConfigured = isGoogleMapsConfigured();
   const { isLoaded, loadError } = useJsApiLoader({
     id: GOOGLE_MAPS_LOADER_ID,
     googleMapsApiKey: apiKey,
@@ -35,7 +37,7 @@ export function PlacesAddressPicker({
 
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
-  if (!apiKey) {
+  if (!isConfigured) {
     return (
       <div className="space-y-2">
         <Label htmlFor={id}>Property address</Label>

@@ -5,6 +5,21 @@ export function getGoogleMapsApiKey(): string {
   return import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? '';
 }
 
+export function isGoogleMapsConfigured(): boolean {
+  const key = getGoogleMapsApiKey();
+  return key.length > 10 && key.startsWith('AIza');
+}
+
+export function handleGoogleMapsAuthError(): void {
+  console.error(
+    '[Google Maps] Auth error. Check:\n' +
+    '1. VITE_GOOGLE_MAPS_API_KEY is set\n' +
+    '2. Billing is enabled on Google Cloud Console\n' +
+    '3. Maps JavaScript API, Places API are enabled\n' +
+    '4. API key restrictions include this domain'
+  );
+}
+
 export type ParsedPlaceAddress = {
   googlePlaceId: string;
   formattedAddress: string;
